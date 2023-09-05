@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Windows.Media.Media3D;
 using System.Windows.Media;
 using System.Drawing;
@@ -10,11 +9,9 @@ public class ParticleSystem
 {
     private readonly List<Particle> particles;
     private readonly GeometryModel3D model;
-    private readonly int CUBOIDHEIGHT = 10;
-    private readonly int MOUSERADIUS = 1000;
     private int XParticleCount = 30;
     private int YParticleCount = 30;
-    private int Size = 50;
+    private int Size = 10;
     public Model3D ParticleModel => model;
     public ParticleSystem(System.Windows.Media.Color color,int amountX = 30, int amountY=30)
     {
@@ -39,7 +36,7 @@ public class ParticleSystem
                 var c = bitmap.GetPixel(ix, iy);
                 var p = new Particle
                 {
-                    Position = new Point3D(ix * Size, iy * Size, 0),
+                    Position = new (ix * Size, iy * Size, 0),
                     Width = Size,
                     Height = c.R,//c.R=c.G=c.B
                 };
@@ -48,36 +45,7 @@ public class ParticleSystem
         }
     }
 
-    public void SpawnParticle(double size)
-    {
-        // 初始化粒子位置和大小
-        for (int ix = 0; ix < XParticleCount; ix++)
-        {
-            for (int iy = 0; iy < YParticleCount; iy++)
-            {
-                var p = new Particle
-                {
-                    Position = new Point3D(ix * size, iy * size, 0),
-                    Width = size,
-                    Height = CUBOIDHEIGHT,
-                };
-                particles.Add(p);
-            }
-        }
-    }
-
-    public void Update(System.Windows.Point mp)
-    {
-        foreach (var p in particles)
-        {
-            //求点到圆心的距离
-            double c = Math.Pow(Math.Pow(mp.X - p.Position.X, 2) + Math.Pow(mp.Y - p.Position.Y, 2), 0.5);
-            p.Height = (MOUSERADIUS / (c + CUBOIDHEIGHT)) * CUBOIDHEIGHT;
-        }
-        UpdateGeometry();
-    }
-
-    private void UpdateGeometry()
+    public void UpdateGeometry()
     {
         var positions = new Point3DCollection();
         var indices = new Int32Collection();
@@ -143,7 +111,7 @@ public class ParticleSystem
             indices.Add(positionIndex + 2);
         }
 
-        ((MeshGeometry3D)model.Geometry).Positions = positions;
-        ((MeshGeometry3D)model.Geometry).TriangleIndices = indices;
+        (model.Geometry as MeshGeometry3D)!.Positions = positions;
+        (model.Geometry as MeshGeometry3D)!.TriangleIndices = indices;
     }
 }

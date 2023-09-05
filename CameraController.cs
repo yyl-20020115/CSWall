@@ -32,9 +32,9 @@ public class CameraController
         cm = camera;
         viewport.Camera = cm;
         this.mainWindow = mainWindow;
-        this.mainWindow.PreviewKeyDown += mainWindow_KeyDown;
+        this.mainWindow.PreviewKeyDown += MainWindow_KeyDown;
 
-        this.mainWindow.PreviewMouseWheel += mainWindow_PreviewMouseWheel;
+        this.mainWindow.PreviewMouseWheel += MainWindow_PreviewMouseWheel;
 
         this.mainWindow.MouseLeftButtonDown += mainWindow_LeftDown;
 
@@ -71,7 +71,8 @@ public class CameraController
 
     // 其中 上、下、Q、E代表平移
     // 左右代表旋转
-    private void mainWindow_KeyDown(object sender, KeyEventArgs e)
+    private void MainWindow_KeyDown(object sender,
+                                    KeyEventArgs e)
     {
         switch (e.Key)
         {
@@ -130,26 +131,24 @@ public class CameraController
         double dx = newPoint.X - ptLast.X;
         double dy = newPoint.Y - ptLast.Y;
 
-        CameraTheta += dx * CameraDTheta * xscale;
-        CameraPhi += dy * CameraDPhi * yscale;
+        CameraTheta -= dx * CameraDTheta * xscale;
+        CameraPhi -= dy * CameraDPhi * yscale;
 
         ptLast = newPoint;
         PositionCameraMouse();
     }
-    private void mainWindow_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    private void MainWindow_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         this.CameraR -= e.Delta;
         this.PositionCameraMouse();
     }
 
     private void PositionCameraMouse()
-    {
-        double x, y, z;
-
-        y = origin[1] + CameraR * Math.Cos(CameraPhi);
-        double h = CameraR * Math.Sin(CameraPhi);
-        x = origin[0] + h * Math.Sin(CameraTheta);
-        z = origin[2] + h * Math.Cos(CameraTheta);
+    {        
+        var y = origin[1] + CameraR * Math.Cos(CameraPhi);
+        var h = CameraR * Math.Sin(CameraPhi);
+        var x = origin[0] + h * Math.Sin(CameraTheta);
+        var z = origin[2] + h * Math.Cos(CameraTheta);
 
         cm.Position = new Point3D(x, y, z);
         cm.LookDirection = new Vector3D(-x, -y, -z);

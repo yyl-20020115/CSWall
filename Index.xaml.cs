@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Linq;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Threading;
@@ -16,7 +15,7 @@ public partial class Index : Page
 {
     private ParticleSystem system;
     private DispatcherTimer _frameTimer;
-    private Point pMouse = new (-1, -1);
+    private System.Windows.Point pMouse = new (-1, -1);
     private PerspectiveCamera Camera;
 
     private CameraController CamerController;
@@ -29,7 +28,10 @@ public partial class Index : Page
         _frameTimer.Interval = TimeSpan.FromMilliseconds(100);
         _frameTimer.Start();
 
-        system = new ParticleSystem(Colors.White);
+        system = new ParticleSystem(Colors.Blue);
+
+
+
         WorldModels.Children.Add(system.ParticleModel);
 
         this.Camera = new PerspectiveCamera
@@ -43,7 +45,7 @@ public partial class Index : Page
 
     private void OnFrame(object sender, EventArgs e)
     {
-        system.Update(pMouse);
+        system.UpdateGeometry();
     }
 
     private void Page_Unloaded(object sender, RoutedEventArgs e)
@@ -53,5 +55,18 @@ public partial class Index : Page
         _frameTimer.Tick -= OnFrame;
         _frameTimer = null;
         system = null;
+    }
+
+    private void Grid_Drop(object sender, DragEventArgs e)
+    {
+        var f = e.Data.GetData(DataFormats.FileDrop);
+        if(f is string[] files && files.Length == 1) {
+            var bitmap =
+                Bitmap.FromFile(files[0]) as Bitmap;
+            if(bitmap != null)
+            {
+                system.SpawnParticle(bitmap);
+            }
+        }
     }
 }
