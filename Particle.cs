@@ -5,6 +5,6 @@ namespace CSWall;
 public class Particle
 {
     public Point3D Position;//位置
-    public double Width;//长方体底面宽
+    public double Thickness;//长方体底面宽
     public double Height;//长方体侧面高
 }
