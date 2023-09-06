@@ -2,6 +2,7 @@
 using System.Windows.Media.Media3D;
 using System.Windows.Media;
 using System.Drawing;
+using GraphAlgorithmTester.Colors;
 
 namespace CSWall;
 
@@ -40,7 +41,7 @@ public class ParticleSystem
                 {
                     Position = new (-halfWidth - halfSize + ix * Size,-halfHeight - halfSize + iy * Size, 0),
                     Thickness = Size,
-                    Height = c.R,//c.R=c.G=c.B
+                    Height = Convert.GetColorValue(c)*256.0,//c.R=c.G=c.B
                 };
                 particles.Add(p);
             }
