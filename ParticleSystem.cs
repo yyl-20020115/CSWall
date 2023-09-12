@@ -3,6 +3,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Media;
 using System.Drawing;
 using GraphAlgorithmTester.Colors;
+using Microsoft.VisualBasic;
 
 namespace CSWall;
 
@@ -31,6 +32,7 @@ public class ParticleSystem
             for (int iy = 0; iy < bitmap.Height; iy++)
             {
                 var c = bitmap.GetPixel(ix, iy);
+                var v = Convert.GetColorValue(c);
                 var p = new Particle
                 {
                     Position = new(
@@ -38,7 +40,7 @@ public class ParticleSystem
                          halfHeight - halfSize + (bitmap.Height - iy * BoxEdgeWidth),
                          0),
                     Thickness = BoxEdgeWidth,
-                    Height = (Convert.GetColorValue(c)) * 100,//c.R=c.G=c.B
+                    Height = v == 0 ? 0 : (1 - v) * 100,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B)
                 };
                 particles.Add(p);
@@ -54,7 +56,7 @@ public class ParticleSystem
             Color = Colors.White,
         };
         var worldModels = WorldModels;
-        if(worldModels != null)
+        if (worldModels != null)
         {
             var collection = new Model3DCollection(); ;
             collection.Add(myDirectionalLight);
@@ -63,7 +65,7 @@ public class ParticleSystem
             {
                 var particle = particles[i];
                 var geometry = new MeshGeometry3D();
-                var color = particle.Color; 
+                var color = particle.Color;
                 var brush = new SolidColorBrush(color);
                 var material = new DiffuseMaterial(
                     brush);
@@ -116,7 +118,7 @@ public class ParticleSystem
                 indices.Add(positionIndex + 7);
                 indices.Add(positionIndex + 3);
                 indices.Add(positionIndex + 4);
-                
+
                 //TOP
                 indices.Add(positionIndex + 4);
                 indices.Add(positionIndex + 6);
