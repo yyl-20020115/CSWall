@@ -18,7 +18,6 @@ public partial class Index : Page
     private System.Windows.Point pMouse = new (-1, -1);
     private PerspectiveCamera Camera;
 
-    private CameraController CamerController;
     public Index()
     {
         InitializeComponent();
@@ -39,8 +38,6 @@ public partial class Index : Page
             FieldOfView = 60
         };
 
-        this.CamerController = new CameraController(
-            this.Camera, this.TheViewport, Application.Current.MainWindow);
     }
 
     private void OnFrame(object sender, EventArgs e)

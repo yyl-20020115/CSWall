@@ -3,10 +3,9 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
-using System.Windows.Threading;
 using System.Drawing;
+using System.IO;
 
 namespace CSWall;
 
@@ -14,14 +13,11 @@ namespace CSWall;
 public partial class MainWindow : Window
 {
     private ParticleSystem system;
-    private DispatcherTimer _frameTimer;
-    private System.Windows.Point pMouse = new(-1, -1);
 
     //声明摄像头
     PerspectiveCamera myPCamera;
     //鼠标灵敏度调节
-    double mouseDeltaFactor = 0.4;
-    Model3DGroup WorldModels = new Model3DGroup();
+    double mouseDeltaFactor = 2;
 
     public MainWindow()
     {
@@ -33,20 +29,18 @@ public partial class MainWindow : Window
         myPCamera.LookDirection = new Vector3D(0, 0, -1);
         myPCamera.FieldOfView = 1000;
         viewPort.Camera = myPCamera;
-        _frameTimer = new DispatcherTimer();
-        _frameTimer.Tick += OnFrame;
-        _frameTimer.Interval = TimeSpan.FromMilliseconds(100);
-        _frameTimer.Start();
 
-        system = new ParticleSystem(Colors.Blue);
-
-        WorldModels.Children.Add(system.ParticleModel);
-        BuildModel();
-
-    }
-    private void OnFrame(object sender, EventArgs e)
-    {
-        system.UpdateGeometry();
+        this.system = new ParticleSystem();
+        BuildModel(system.WorldVisual);
+        var filename = "dora.png";
+        if (File.Exists(filename))
+        {
+            using var bitmap = Bitmap.FromFile(filename) as Bitmap;
+            if(bitmap != null)
+            {
+                this.system.SpawnParticle(bitmap);
+            }
+        }
     }
     private void Grid_Drop(object sender, DragEventArgs e)
     {
@@ -61,47 +55,45 @@ public partial class MainWindow : Window
             }
         }
     }
-    public void BuildModel()
+    public void BuildModel(ModelVisual3D WorldModels)
     {
         //光源
         //AmbientLight （自然光）
         //DirectionalLight （方向光）
         //PointLight （点光源）
         //SpotLight （聚光源）
-        DirectionalLight myDirectionalLight = new DirectionalLight();
-        myDirectionalLight.Color = Colors.Red;
-        myDirectionalLight.Direction = new Vector3D(0.61, 0.5, 0.61);
-        WorldModels.Children.Add(myDirectionalLight);
-
-        //DirectionalLight myDirectionalLight2 = new DirectionalLight();
-        //myDirectionalLight2.Color = Colors.White;
-        //myDirectionalLight2.Direction = new Vector3D(0.61, 0.5, 0.61);
-        //myModel3DGroup.Children.Add(myDirectionalLight2);
-
-        var modelVisual3D = new ModelVisual3D();
-
-        modelVisual3D.Content = WorldModels;
 
         //下面是调整n的位置，初学者可以先注释掉。
-        //var tt = new TranslateTransform3D();
-        //tt.OffsetX = 110;
-        //tt.OffsetZ = -50;
-        //tt.OffsetY = -100;
-        //var tr = new RotateTransform3D();
-        //tr.Rotation = new AxisAngleRotation3D(new Vector3D(1, 0, 0), 90);
+        var tt = new TranslateTransform3D
+        {
+            OffsetX = 110,
+            OffsetZ = 50,
+            OffsetY = 50
+        };
+        var tr = new RotateTransform3D
+        {
+            Rotation = new AxisAngleRotation3D(new Vector3D(1, 0, 0), 30)
+        };
 
-        //var tr2 = new RotateTransform3D();
-        //tr2.Rotation = new AxisAngleRotation3D(new Vector3D(0, 0, 1), -45);
+        var tr2 = new RotateTransform3D
+        {
+            Rotation = new AxisAngleRotation3D(new Vector3D(0, 0, 1), -30)
+        };
 
-        //var ts = new ScaleTransform3D();
-        //ts.ScaleX = 1.5;
-        //ts.ScaleY = 1.5;
-        //ts.ScaleZ = 1.6;
-        //var tg = new Transform3DGroup();
-        //tg.Children.Add(tr); tg.Children.Add(tr2); tg.Children.Add(tt); tg.Children.Add(ts);
-        //modelVisual3D.Transform = tg;
+        var ts = new ScaleTransform3D
+        {
+            ScaleX = 1.5,
+            ScaleY = 1.5,
+            ScaleZ = 1.6
+        };
+        var tg = new Transform3DGroup();
+        tg.Children.Add(tr); 
+        tg.Children.Add(tr2); 
+        tg.Children.Add(tt); 
+        tg.Children.Add(ts);
+        WorldModels.Transform = tg;
         //将两个模型添加到场景中
-        viewPort.Children.Add(modelVisual3D);
+        viewPort.Children.Add(WorldModels);
         //添加鼠标事件，用于显示隐藏光晕特效
         viewPort.MouseEnter += Vp_MouseEnter;
         viewPort.MouseLeave += Vp_MouseLeave;
@@ -115,7 +107,7 @@ public partial class MainWindow : Window
 
     private void Vp_MouseEnter(object sender, MouseEventArgs e)
     {
-        DropShadowEffect BlurRadius = new DropShadowEffect();
+        var BlurRadius = new DropShadowEffect();
 
         BlurRadius.BlurRadius = 20;
         BlurRadius.Color = Colors.Yellow;
@@ -130,11 +122,11 @@ public partial class MainWindow : Window
     {
         //MessageBox.Show(rawresult.ToString());
         // RayHitTestResult rayResult = rawresult as RayHitTestResult;
-        RayHitTestResult rayResult = rawresult as RayHitTestResult;
+        var rayResult = rawresult as RayHitTestResult;
         if (rayResult != null)
         {
             //RayMeshGeometry3DHitTestResult rayMeshResult = rayResult as RayMeshGeometry3DHitTestResult;
-            RayHitTestResult rayMeshResultrayResult = rayResult as RayHitTestResult;
+            var rayMeshResultrayResult = rayResult as RayHitTestResult;
             if (rayMeshResultrayResult != null)
             {
                 //GeometryModel3D hitgeo = rayMeshResult.ModelHit as GeometryModel3D;
@@ -158,10 +150,10 @@ public partial class MainWindow : Window
         //VisualTreeHelper.HitTest(vp.Children[0], null, ResultCallback, hitParams);
 
         //下面是进行点击触发检测，可忽略，注释
-        Point3D testpoint3D = new Point3D(mouseLastPosition.X, mouseLastPosition.Y, 0);
-        Vector3D testdirection = new Vector3D(mouseLastPosition.X, mouseLastPosition.Y, 100);
-        PointHitTestParameters pointparams = new PointHitTestParameters(mouseLastPosition);
-        RayHitTestParameters rayparams = new RayHitTestParameters(testpoint3D, testdirection);
+        var testpoint3D = new Point3D(mouseLastPosition.X, mouseLastPosition.Y, 0);
+        var testdirection = new Vector3D(mouseLastPosition.X, mouseLastPosition.Y, 100);
+        var pointparams = new PointHitTestParameters(mouseLastPosition);
+        var rayparams = new RayHitTestParameters(testpoint3D, testdirection);
 
         //test for a result in the Viewport3D
         VisualTreeHelper.HitTest(viewPort, null, HTResult, pointparams);
@@ -199,38 +191,37 @@ public partial class MainWindow : Window
     {
         double scaleFactor = 240;
         //120 near ,   -120 far
-        System.Diagnostics.Debug.WriteLine(e.Delta.ToString());
+        //System.Diagnostics.Debug.WriteLine(e.Delta.ToString());
         Point3D currentPosition = myPCamera.Position;
-        Vector3D lookDirection = myPCamera.LookDirection;//new Vector3D(camera.LookDirection.X, camera.LookDirection.Y, camera.LookDirection.Z);
+        Vector3D lookDirection = myPCamera.LookDirection;
         lookDirection.Normalize();
 
         lookDirection *= scaleFactor;
 
-        if (e.Delta == 120)//getting near
+        if (e.Delta > 0)//getting near
         {
             //myPCamera.FieldOfView /= 1.2;
-
-            if ((currentPosition.X + lookDirection.X) * currentPosition.X > 0)
-            {
-                currentPosition += lookDirection;
-            }
+            currentPosition += lookDirection;
         }
-        if (e.Delta == -120)//getting far
+        if (e.Delta < 0)//getting far
         {
             //myPCamera.FieldOfView *= 1.2;
             currentPosition -= lookDirection;
         }
 
-        var positionAnimation = new Point3DAnimation();
-        positionAnimation.BeginTime = new TimeSpan(0, 0, 0);
-        positionAnimation.Duration = TimeSpan.FromMilliseconds(100);
-        positionAnimation.To = currentPosition;
-        positionAnimation.From = myPCamera.Position;
-        positionAnimation.Completed += new EventHandler(positionAnimation_Completed);
-        myPCamera.BeginAnimation(PerspectiveCamera.PositionProperty, positionAnimation, HandoffBehavior.Compose);
+        //var positionAnimation = new Point3DAnimation
+        //{
+        //    BeginTime = new TimeSpan(0, 0, 0),
+        //    Duration = TimeSpan.FromMilliseconds(100),
+        //    To = currentPosition,
+        //    From = myPCamera.Position
+        //};
+        //positionAnimation.Completed += new EventHandler(PositionAnimation_Completed);
+        //myPCamera.BeginAnimation(PerspectiveCamera.PositionProperty, positionAnimation, HandoffBehavior.Compose);
+        myPCamera.Position = currentPosition;
     }
 
-    void positionAnimation_Completed(object sender, EventArgs e)
+    void PositionAnimation_Completed(object sender, EventArgs e)
     {
         Point3D position = myPCamera.Position;
         myPCamera.BeginAnimation(PerspectiveCamera.PositionProperty, null);
@@ -240,10 +231,10 @@ public partial class MainWindow : Window
     // 垂直变换
     private void VerticalTransform(bool upDown, double angleDeltaFactor)
     {
-        Vector3D postion = new Vector3D(myPCamera.Position.X, myPCamera.Position.Y, myPCamera.Position.Z);
+        Vector3D postion = new(myPCamera.Position.X, myPCamera.Position.Y, myPCamera.Position.Z);
         Vector3D rotateAxis = Vector3D.CrossProduct(postion, myPCamera.UpDirection);
-        RotateTransform3D rt3d = new RotateTransform3D();
-        AxisAngleRotation3D rotate = new AxisAngleRotation3D(rotateAxis, angleDeltaFactor * (upDown ? 1 : -1));
+        RotateTransform3D rt3d = new();
+        AxisAngleRotation3D rotate = new(rotateAxis, angleDeltaFactor * (upDown ? 1 : -1));
         rt3d.Rotation = rotate;
         Matrix3D matrix = rt3d.Value;
         Point3D newPostition = matrix.Transform(myPCamera.Position);
@@ -258,10 +249,10 @@ public partial class MainWindow : Window
     // 水平变换：
     private void HorizontalTransform(bool leftRight, double angleDeltaFactor)
     {
-        Vector3D postion = new Vector3D(myPCamera.Position.X, myPCamera.Position.Y, myPCamera.Position.Z);
+        Vector3D postion = new(myPCamera.Position.X, myPCamera.Position.Y, myPCamera.Position.Z);
         Vector3D rotateAxis = myPCamera.UpDirection;
-        RotateTransform3D rt3d = new RotateTransform3D();
-        AxisAngleRotation3D rotate = new AxisAngleRotation3D(rotateAxis, angleDeltaFactor * (leftRight ? 1 : -1));
+        RotateTransform3D rt3d = new();
+        AxisAngleRotation3D rotate = new(rotateAxis, angleDeltaFactor * (leftRight ? 1 : -1));
         rt3d.Rotation = rotate;
         Matrix3D matrix = rt3d.Value;
         Point3D newPostition = matrix.Transform(myPCamera.Position);
@@ -269,6 +260,31 @@ public partial class MainWindow : Window
         myPCamera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
     }
 
-
-
+    private void Window_KeyDown(object sender, KeyEventArgs e)
+    {
+        var p = myPCamera.Position;
+        var any = false;
+        var offset = mouseDeltaFactor;
+        switch (e.Key)
+        {
+            case Key.Left:
+                p.Offset(offset, 0, 0);
+                any = true;
+                break;
+            case Key.Right:
+                p.Offset(-offset, 0, 0);
+                any = true;
+                break;
+            case Key.Up:
+                p.Offset(0, -offset, 0);
+                any = true;
+                break;
+            case Key.Down:
+                p.Offset(0, offset, 0);
+                any = true;
+                break;
+        }
+        if (any)
+            myPCamera.Position = p;
+    }
 }

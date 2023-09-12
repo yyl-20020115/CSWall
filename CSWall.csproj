@@ -8,6 +8,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="CameraController.cs" />
+    <Compile Remove="Index.xaml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="Index.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
   </ItemGroup>
 

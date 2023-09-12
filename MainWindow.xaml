@@ -1,7 +1,7 @@
 ﻿<Window x:Class="CSWall.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        MouseMove="Window_MouseMove"
+        MouseMove="Window_MouseMove" KeyDown="Window_KeyDown"
         Title="MainWindow" Height="350" Width="525" >
     <Grid x:Name="lay" Background="Azure"  MouseWheel="VP_MouseWheel" AllowDrop="true" Drop="Grid_Drop">
 
