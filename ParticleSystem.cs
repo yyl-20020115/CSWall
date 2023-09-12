@@ -3,7 +3,6 @@ using System.Windows.Media.Media3D;
 using System.Windows.Media;
 using System.Drawing;
 using GraphAlgorithmTester.Colors;
-using Microsoft.VisualBasic;
 
 namespace CSWall;
 
