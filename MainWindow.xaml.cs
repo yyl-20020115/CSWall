@@ -107,13 +107,14 @@ public partial class MainWindow : Window
 
     private void Vp_MouseEnter(object sender, MouseEventArgs e)
     {
-        var BlurRadius = new DropShadowEffect();
-
-        BlurRadius.BlurRadius = 20;
-        BlurRadius.Color = Colors.Yellow;
-        BlurRadius.Direction = 0;
-        BlurRadius.Opacity = 1;
-        BlurRadius.ShadowDepth = 0;
+        var BlurRadius = new DropShadowEffect
+        {
+            BlurRadius = 20,
+            Color = Colors.Yellow,
+            Direction = 0,
+            Opacity = 1,
+            ShadowDepth = 0
+        };
         viewPort.Effect = BlurRadius;
     }
 
