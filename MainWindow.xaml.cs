@@ -47,7 +47,7 @@ public partial class MainWindow : Window
         var f = e.Data.GetData(DataFormats.FileDrop);
         if (f is string[] files && files.Length == 1)
         {
-            var bitmap =
+            using var bitmap =
                 Bitmap.FromFile(files[0]) as Bitmap;
             if (bitmap != null)
             {
