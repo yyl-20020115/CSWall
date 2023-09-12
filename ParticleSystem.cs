@@ -41,7 +41,7 @@ public class ParticleSystem
                 {
                     Position = new (-halfWidth - halfSize + ix * Size,-halfHeight - halfSize + iy * Size, 0),
                     Thickness = Size,
-                    Height = Convert.GetColorValue(c)*256.0,//c.R=c.G=c.B
+                    Height =(1- Convert.GetColorValue(c))*256.0,//c.R=c.G=c.B
                 };
                 particles.Add(p);
             }
