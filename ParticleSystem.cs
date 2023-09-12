@@ -69,13 +69,9 @@ public class ParticleSystem
                 var material = new DiffuseMaterial(
                     brush);
 
-
-
                 var model3D = new GeometryModel3D(geometry, material);
-
-                var positions = geometry.Positions;
-                var indices = geometry.TriangleIndices;
-
+                var positions = new Point3DCollection();
+                var indices = new Int32Collection();
 
                 //0,0,0
                 var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
@@ -151,6 +147,9 @@ public class ParticleSystem
                 indices.Add(positionIndex + 7);
                 indices.Add(positionIndex + 6);
                 indices.Add(positionIndex + 2);
+
+                geometry.Positions = positions;
+                geometry.TriangleIndices = indices;
 
                 collection.Add(model3D);
             }
