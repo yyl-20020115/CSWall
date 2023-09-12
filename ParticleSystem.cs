@@ -13,7 +13,7 @@ public class ParticleSystem
     public ModelVisual3D WorldVisual = new() { Content = new Model3DGroup() };
     public Model3DGroup? WorldModels => WorldVisual.Content as Model3DGroup;
 
-    public int Size { get; set; } = 2;
+    public int BoxEdgeWidth { get; set; } = 2;
 
     public ParticleSystem()
     {
@@ -23,9 +23,9 @@ public class ParticleSystem
         this.particles.Clear();
         this.WorldModels?.Children.Clear();
 
-        var halfWidth = bitmap.Width * Size >> 1;
-        var halfHeight = bitmap.Height * Size >> 1;
-        var halfSize = Size >> 1;
+        var halfWidth = bitmap.Width * BoxEdgeWidth >> 1;
+        var halfHeight = bitmap.Height * BoxEdgeWidth >> 1;
+        var halfSize = BoxEdgeWidth >> 1;
         // 初始化粒子位置和大小
         for (int ix = 0; ix < bitmap.Width; ix++)
         {
@@ -35,9 +35,10 @@ public class ParticleSystem
                 var p = new Particle
                 {
                     Position = new(
-                        -halfWidth - halfSize + bitmap.Width - ix * Size,
-                        bitmap.Height - halfHeight - halfSize + iy * Size, 0),
-                    Thickness = Size,
+                        -halfWidth - halfSize + (bitmap.Width - ix * BoxEdgeWidth),
+                         halfHeight - halfSize + (bitmap.Height - iy * BoxEdgeWidth),
+                         0),
+                    Thickness = BoxEdgeWidth,
                     Height = (Convert.GetColorValue(c)) * 100,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B)
                 };

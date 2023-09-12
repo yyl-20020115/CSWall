@@ -66,9 +66,9 @@ public partial class MainWindow : Window
         //下面是调整n的位置，初学者可以先注释掉。
         var tt = new TranslateTransform3D
         {
-            OffsetX = 110,
-            OffsetZ = 50,
-            OffsetY = 50
+            OffsetX = 0,
+            OffsetZ = 0,
+            OffsetY = 0
         };
         var tr = new RotateTransform3D
         {
@@ -77,7 +77,7 @@ public partial class MainWindow : Window
 
         var tr2 = new RotateTransform3D
         {
-            Rotation = new AxisAngleRotation3D(new Vector3D(0, 0, 1), -30)
+            Rotation = new AxisAngleRotation3D(new Vector3D(0, 0, 1), 30)
         };
 
         var ts = new ScaleTransform3D
