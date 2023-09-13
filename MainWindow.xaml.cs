@@ -209,24 +209,7 @@ public partial class MainWindow : Window
             //myPCamera.FieldOfView *= 1.2;
             currentPosition -= lookDirection;
         }
-
-        //var positionAnimation = new Point3DAnimation
-        //{
-        //    BeginTime = new TimeSpan(0, 0, 0),
-        //    Duration = TimeSpan.FromMilliseconds(100),
-        //    To = currentPosition,
-        //    From = myPCamera.Position
-        //};
-        //positionAnimation.Completed += new EventHandler(PositionAnimation_Completed);
-        //myPCamera.BeginAnimation(PerspectiveCamera.PositionProperty, positionAnimation, HandoffBehavior.Compose);
         myPCamera.Position = currentPosition;
-    }
-
-    void PositionAnimation_Completed(object sender, EventArgs e)
-    {
-        Point3D position = myPCamera.Position;
-        myPCamera.BeginAnimation(PerspectiveCamera.PositionProperty, null);
-        myPCamera.Position = position;
     }
 
     // 垂直变换
@@ -243,9 +226,9 @@ public partial class MainWindow : Window
         myPCamera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
 
         //update the up direction
-        Vector3D newUpDirection = Vector3D.CrossProduct(myPCamera.LookDirection, rotateAxis);
-        newUpDirection.Normalize();
-        myPCamera.UpDirection = newUpDirection;
+        //Vector3D newUpDirection = Vector3D.CrossProduct(myPCamera.LookDirection, rotateAxis);
+        //newUpDirection.Normalize();
+        //myPCamera.UpDirection = newUpDirection;
     }
     // 水平变换：
     private void HorizontalTransform(bool leftRight, double angleDeltaFactor)

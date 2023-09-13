@@ -12,7 +12,8 @@ public class ParticleSystem
     public ModelVisual3D WorldVisual = new() { Content = new Model3DGroup() };
     public Model3DGroup? WorldModels => WorldVisual.Content as Model3DGroup;
 
-    public int BoxEdgeWidth { get; set; } = 2;
+    public int BoxEdgeWidth { get; set; } = 8;
+    public int BoxHeight { get; set; } = 512;
 
     public ParticleSystem()
     {
@@ -21,25 +22,26 @@ public class ParticleSystem
     {
         this.particles.Clear();
         this.WorldModels?.Children.Clear();
-
-        var halfWidth = bitmap.Width * BoxEdgeWidth >> 1;
-        var halfHeight = bitmap.Height * BoxEdgeWidth >> 1;
+        var width = bitmap.Width;
+        var height = bitmap.Height;
+        var halfWidth = width >> 1;
+        var halfHeight = height >> 1;
         var halfSize = BoxEdgeWidth >> 1;
         // 初始化粒子位置和大小
-        for (int ix = 0; ix < bitmap.Width; ix++)
+        for (int ix = 0; ix < width; ix++)
         {
-            for (int iy = 0; iy < bitmap.Height; iy++)
+            for (int iy = 0; iy < height; iy++)
             {
                 var c = bitmap.GetPixel(ix, iy);
                 var v = Convert.GetColorValue(c);
                 var p = new Particle
                 {
                     Position = new(
-                        -halfWidth - halfSize + (bitmap.Width - ix * BoxEdgeWidth),
-                         halfHeight - halfSize + (bitmap.Height - iy * BoxEdgeWidth),
+                        (halfWidth - ix) * BoxEdgeWidth,
+                        (iy-halfHeight) * BoxEdgeWidth,
                          0),
                     Thickness = BoxEdgeWidth,
-                    Height = v == 0 ? 0 : (1 - v) * 100,//c.R=c.G=c.B
+                    Height = v == 0 ? 0 : ( v) * BoxHeight,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B)
                 };
                 particles.Add(p);
