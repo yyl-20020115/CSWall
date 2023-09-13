@@ -26,7 +26,6 @@ public class ParticleSystem
         var height = bitmap.Height;
         var halfWidth = width >> 1;
         var halfHeight = height >> 1;
-        var halfSize = BoxEdgeWidth >> 1;
         // 初始化粒子位置和大小
         for (int ix = 0; ix < width; ix++)
         {
