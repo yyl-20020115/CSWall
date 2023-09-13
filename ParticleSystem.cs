@@ -40,7 +40,7 @@ public class ParticleSystem
                         (iy-halfHeight) * BoxEdgeWidth,
                          0),
                     Thickness = BoxEdgeWidth,
-                    Height = v == 1 ? 0 : v * BoxHeight,//c.R=c.G=c.B
+                    Height = /*v == 0 ? 1 : */v * BoxHeight,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B)
                 };
                 particles.Add(p);
