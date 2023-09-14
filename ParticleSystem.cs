@@ -66,6 +66,7 @@ public class ParticleSystem
                 var particle = particles[i];
                 var geometry = new MeshGeometry3D();
                 var color = particle.Color;
+                if (Colors.Black == color) continue;
                 var brush = new SolidColorBrush(color);
                 var material = new DiffuseMaterial(
                     brush);
