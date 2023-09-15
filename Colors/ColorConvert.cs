@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace GraphAlgorithmTester.Colors;
 
-public static class Convert
+public static class ColorConvert
 {
     /// <summary>
     /// Converts RGB to HSB.

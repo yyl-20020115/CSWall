@@ -3,22 +3,31 @@ using System.Windows.Media.Media3D;
 using System.Windows.Media;
 using System.Drawing;
 using GraphAlgorithmTester.Colors;
+using System.Windows.Media.Imaging;
+using System;
+using System.IO;
+using System.Windows;
 
 namespace CSWall;
 
 public class ParticleSystem
 {
     private readonly List<Particle> particles = new();
+    private Particle[,] particle_matrix = new Particle[0, 0];
+
     public ModelVisual3D WorldVisual = new() { Content = new Model3DGroup() };
     public Model3DGroup? WorldModels => WorldVisual.Content as Model3DGroup;
 
     public int BoxEdgeWidth { get; set; } = 8;
     public int BoxHeight { get; set; } = 512;
+    protected Bitmap bitmap;
+    protected BitmapImage image;
 
     public ParticleSystem()
     {
     }
-    public void SpawnParticle(Bitmap bitmap)
+
+    public void SpawnParticleWithBoxes(Bitmap bitmap)
     {
         this.particles.Clear();
         this.WorldModels?.Children.Clear();
@@ -26,30 +35,172 @@ public class ParticleSystem
         var height = bitmap.Height;
         var halfWidth = width >> 1;
         var halfHeight = height >> 1;
+
+        particle_matrix = new Particle[height, width];
         // 初始化粒子位置和大小
         for (int ix = 0; ix < width; ix++)
         {
             for (int iy = 0; iy < height; iy++)
             {
                 var c = bitmap.GetPixel(ix, iy);
-                var v = Convert.GetColorValue(c);
+                var v = ColorConvert.GetColorValue(c);
                 var p = new Particle
                 {
                     Position = new(
                         (halfWidth - ix) * BoxEdgeWidth,
-                        (iy-halfHeight) * BoxEdgeWidth,
+                        (iy - halfHeight) * BoxEdgeWidth,
                          0),
                     Thickness = BoxEdgeWidth,
                     Height = /*v == 0 ? 1 : */v * BoxHeight,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B)
                 };
                 particles.Add(p);
+                particle_matrix[iy, ix] = p;
             }
         }
+        this.image = GetBitmapImageBybitmap(this.bitmap = bitmap);
         this.UpdateGeometry();
     }
 
+    //BitmapImage  to  Bitmap
+    public static Bitmap GetBitmapByBitmapImage(BitmapImage bitmapImage, bool isPng = false)
+    {
+        Bitmap bitmap;
+        MemoryStream outStream = new MemoryStream();
+        BitmapEncoder enc = new BmpBitmapEncoder();
+        if (isPng)
+        {
+            enc = new PngBitmapEncoder();
+        }
+        enc.Frames.Add(BitmapFrame.Create(bitmapImage));
+        enc.Save(outStream);
+        bitmap = new Bitmap(outStream);
+        return bitmap;
+    }
+    // Bitmap  to BitmapImage
+    public static BitmapImage GetBitmapImageBybitmap(Bitmap bitmap)
+    {
+        BitmapImage bitmapImage = new BitmapImage();
+        try
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = ms;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
+                bitmapImage.Freeze();
+            }
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
+        return bitmapImage;
+    }
     protected void UpdateGeometry()
+    {
+        var light = new AmbientLight
+        {
+            Color = Colors.White,
+        };
+        var worldModels = WorldModels;
+        if (worldModels != null)
+        {
+            var collection = new Model3DCollection(); ;
+            collection.Add(light);
+
+            var positions = new Point3DCollection();
+            var indices = new Int32Collection();
+            var textures = new PointCollection();
+
+            int h = this.particle_matrix.GetLength(0);
+            int w = this.particle_matrix.GetLength(1);
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    var particle = this.particle_matrix[y, x];
+                    //0,0,0
+                    double height = particle.Height;
+                    var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z+ height);
+                    var p1 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
+
+                    positions.Add(p0);//0,0,0 -> 0
+                    positions.Add(p1);//0,0,0 -> 0
+
+                    var pt = new System.Windows.Point(x / (double)w, y / (double)h);
+                    textures.Add(pt);
+                    textures.Add(pt);
+                }
+            }
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    int nowIndex = x + y * w;
+                    //三角形1
+                    indices.Add((nowIndex) << 1);
+                    indices.Add((nowIndex + w) << 1);
+                    indices.Add((nowIndex + w + 1) << 1);
+
+                    //三角形2
+                    indices.Add((nowIndex) << 1);
+                    indices.Add((nowIndex + w + 1) << 1);
+                    indices.Add((nowIndex + 1) << 1);
+
+                    //三角形1
+                    indices.Add(((nowIndex + w + 1) << 1) + 1);
+                    indices.Add(((nowIndex + w) << 1) + 1);
+                    indices.Add(((nowIndex) << 1) + 1);
+
+                    //三角形2
+                    indices.Add(((nowIndex + 1) << 1) + 1);
+                    indices.Add(((nowIndex + w + 1) << 1) + 1);
+                    indices.Add(((nowIndex) << 1) + 1);
+
+                }
+            }
+
+            //int np = positions.Count;
+            //for (int x = 0; x < w; x++)
+            //{
+            //    var particle = this.particle_matrix[0, x];
+            //    //0,0,0
+            //    double height = particle.Height;
+            //    var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z+ height);
+            //    var p1 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
+
+            //    positions.Add(p0);//0,0,0 -> 0
+            //    positions.Add(p1);//0,0,0 -> 0
+
+            //    var pt = new System.Windows.Point(x / (double)w, 0 / (double)h);
+            //    textures.Add(pt);
+            //    textures.Add(pt);
+            //}
+            //for (int x = 0; x < w; x++)
+            //{
+            //}
+            //for (int y = 0; y < h; y++)
+            //{
+            //}
+
+            var geometry = new MeshGeometry3D();
+            var visualBrush = new ImageBrush(this.image);
+            var material = new DiffuseMaterial(
+                visualBrush);
+
+            geometry.Positions = positions;
+            geometry.TriangleIndices = indices;
+            geometry.TextureCoordinates = textures;
+            collection.Add(new GeometryModel3D(geometry, material));
+
+            worldModels.Children = collection;
+        }
+    }
+
+    protected void UpdateGeometryWithBoxes()
     {
         var myDirectionalLight = new AmbientLight
         {

@@ -274,7 +274,7 @@ public class WavefrontObjLoader
     {
         Vector3D vectord = point - center;
         vectord.Normalize();
-        return new Point((Math.Asin(vectord.X) / 3.1415926535897931) + 0.5, 1.0 - ((Math.Asin(vectord.Y) / 3.1415926535897931) + 0.5));
+        return new Point((Math.Asin(vectord.X) / Math.PI) + 0.5, 1.0 - ((Math.Asin(vectord.Y) / Math.PI) + 0.5));
     }
 
     private Dictionary<string, ObjMaterial> LoadMtlFile(string mtlFilename)

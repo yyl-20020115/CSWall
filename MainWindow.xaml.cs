@@ -38,7 +38,7 @@ public partial class MainWindow : Window
             using var bitmap = Bitmap.FromFile(filename) as Bitmap;
             if(bitmap != null)
             {
-                this.system.SpawnParticle(bitmap);
+                this.system.SpawnParticleWithBoxes(bitmap);
             }
         }
     }
@@ -51,7 +51,7 @@ public partial class MainWindow : Window
                 Bitmap.FromFile(files[0]) as Bitmap;
             if (bitmap != null)
             {
-                system.SpawnParticle(bitmap);
+                system.SpawnParticleWithBoxes(bitmap);
             }
         }
     }
