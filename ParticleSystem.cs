@@ -269,7 +269,6 @@ public class ParticleSystem
                     indices.Add(pc + 2 * y + 1);
                     indices.Add(pc + 2 * (y + 1) + 1);
                 }
-
             }
 
             var geometry_wall_2 = new MeshGeometry3D();
@@ -313,8 +312,6 @@ public class ParticleSystem
             geometry_wall_3.TriangleIndices = indices;
             geometry_wall_3.TextureCoordinates = textures;
             collection.Add(new GeometryModel3D(geometry_wall_3, material_wall_3));
-
-
 
 
             worldModels.Children = collection;
