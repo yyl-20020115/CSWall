@@ -124,7 +124,7 @@ public class ParticleSystem
                     var particle = this.particle_matrix[y, x];
                     //0,0,0
                     double height = particle.Height;
-                    var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z+ height);
+                    var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);
                     var p1 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
 
                     positions.Add(p0);//0,0,0 -> 0
@@ -163,38 +163,159 @@ public class ParticleSystem
                 }
             }
 
-            //int np = positions.Count;
-            //for (int x = 0; x < w; x++)
-            //{
-            //    var particle = this.particle_matrix[0, x];
-            //    //0,0,0
-            //    double height = particle.Height;
-            //    var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z+ height);
-            //    var p1 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
-
-            //    positions.Add(p0);//0,0,0 -> 0
-            //    positions.Add(p1);//0,0,0 -> 0
-
-            //    var pt = new System.Windows.Point(x / (double)w, 0 / (double)h);
-            //    textures.Add(pt);
-            //    textures.Add(pt);
-            //}
-            //for (int x = 0; x < w; x++)
-            //{
-            //}
-            //for (int y = 0; y < h; y++)
-            //{
-            //}
-
             var geometry = new MeshGeometry3D();
             var visualBrush = new ImageBrush(this.image);
-            var material = new DiffuseMaterial(
-                visualBrush);
-
+            var material = new DiffuseMaterial(visualBrush);
             geometry.Positions = positions;
             geometry.TriangleIndices = indices;
             geometry.TextureCoordinates = textures;
             collection.Add(new GeometryModel3D(geometry, material));
+
+
+
+            //wall_0
+            positions = new();
+            indices = new();
+            textures = new();
+            int pc = 0;
+            for (int x = 0; x < w; x++)
+            {
+                var particle = this.particle_matrix[0, x];
+                //0,0,0
+                double height = particle.Height;
+                var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);
+                var p1 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
+
+                positions.Add(p0);//0,0,0 -> 0
+                positions.Add(p1);//0,0,0 -> 0
+
+                if (x < w - 1)
+                {
+                    indices.Add(pc + 2 * x);
+                    indices.Add(pc + 2 * (x + 1));
+                    indices.Add(pc + 2 * x + 1);
+
+                    indices.Add(pc + 2 * (x + 1));
+                    indices.Add(pc + 2 * (x + 1) + 1);
+                    indices.Add(pc + 2 * x + 1);
+                }
+            }
+
+            var geometry_wall_0 = new MeshGeometry3D();
+            var material_wall_0 = new DiffuseMaterial(new SolidColorBrush(Colors.White));
+            geometry_wall_0.Positions = positions;
+            geometry_wall_0.TriangleIndices = indices;
+            geometry_wall_0.TextureCoordinates = textures;
+            collection.Add(new GeometryModel3D(geometry_wall_0, material_wall_0));
+            //wall_1
+            positions = new();
+            indices = new();
+            textures = new();
+            pc = 0;
+            for (int x = 0; x < w; x++)
+            {
+                var particle = this.particle_matrix[h - 1, x];
+                //0,0,0
+                double height = particle.Height;
+                var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);
+                var p1 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
+
+                positions.Add(p0);//0,0,0 -> 0
+                positions.Add(p1);//0,0,0 -> 0
+
+                if (x < w - 1)
+                {
+                    indices.Add(pc + 2 * x);
+                    indices.Add(pc + 2 * x + 1);
+                    indices.Add(pc + 2 * (x + 1));
+
+                    indices.Add(pc + 2 * (x + 1));
+                    indices.Add(pc + 2 * x + 1);
+                    indices.Add(pc + 2 * (x + 1) + 1);
+                }
+
+            }
+
+            var geometry_wall_1 = new MeshGeometry3D();
+            var material_wall_1 = new DiffuseMaterial(new SolidColorBrush(Colors.White));
+            geometry_wall_1.Positions = positions;
+            geometry_wall_1.TriangleIndices = indices;
+            geometry_wall_1.TextureCoordinates = textures;
+            collection.Add(new GeometryModel3D(geometry_wall_1, material_wall_1));
+
+            //wall_2
+            positions = new();
+            indices = new();
+            textures = new();
+            pc = 0;
+            for (int y = 0; y < h; y++)
+            {
+                var particle = this.particle_matrix[y, 0];
+                //0,0,0
+                double height = particle.Height;
+                var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);
+                var p1 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
+
+                positions.Add(p0);//0,0,0 -> 0
+                positions.Add(p1);//0,0,0 -> 0
+
+                if (y < h - 1)
+                {
+                    indices.Add(pc + 2 * y);
+                    indices.Add(pc + 2 * y + 1);
+                    indices.Add(pc + 2 * (y + 1));
+
+                    indices.Add(pc + 2 * (y + 1));
+                    indices.Add(pc + 2 * y + 1);
+                    indices.Add(pc + 2 * (y + 1) + 1);
+                }
+
+            }
+
+            var geometry_wall_2 = new MeshGeometry3D();
+            var material_wall_2 = new DiffuseMaterial(new SolidColorBrush(Colors.White));
+            geometry_wall_2.Positions = positions;
+            geometry_wall_2.TriangleIndices = indices;
+            geometry_wall_2.TextureCoordinates = textures;
+            collection.Add(new GeometryModel3D(geometry_wall_2, material_wall_2));
+
+            positions = new();
+            indices = new();
+            textures = new();
+            pc = 0;
+            for (int y = 0; y < h; y++)
+            {
+                var particle = this.particle_matrix[y, w-1];
+                //0,0,0
+                double height = particle.Height;
+                var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);
+                var p1 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
+
+                positions.Add(p0);//0,0,0 -> 0
+                positions.Add(p1);//0,0,0 -> 0
+
+                if (y < h - 1)
+                {
+                    indices.Add(pc + 2 * y);
+                    indices.Add(pc + 2 * (y + 1));
+                    indices.Add(pc + 2 * y + 1);
+
+                    indices.Add(pc + 2 * (y + 1));
+                    indices.Add(pc + 2 * (y + 1) + 1);
+                    indices.Add(pc + 2 * y + 1);
+                }
+
+            }
+
+            var geometry_wall_3 = new MeshGeometry3D();
+            var material_wall_3 = new DiffuseMaterial(new SolidColorBrush(Colors.White));
+            geometry_wall_3.Positions = positions;
+            geometry_wall_3.TriangleIndices = indices;
+            geometry_wall_3.TextureCoordinates = textures;
+            collection.Add(new GeometryModel3D(geometry_wall_3, material_wall_3));
+
+
+
 
             worldModels.Children = collection;
         }
