@@ -3,12 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         MouseMove="Window_MouseMove" KeyDown="Window_KeyDown"
         Title="MainWindow" Height="350" Width="525" >
-    <Grid x:Name="lay" Background="Azure"  MouseWheel="VP_MouseWheel" AllowDrop="true" Drop="Grid_Drop">
+    <Grid x:Name="lay" Background="Azure" MouseLeftButtonDown="vp_MouseLeftButtonDown" MouseWheel="VP_MouseWheel" AllowDrop="true" Drop="Grid_Drop">
 
-        <Viewport3D x:Name="viewPort"           
-                    MouseLeftButtonDown="vp_MouseLeftButtonDown" Margin="0,31,0.4,-0.2">
+        <Viewport3D x:Name="viewPort" Margin="0,31,0.4,-0.2">
             <Viewport3D.Camera>
-                <PerspectiveCamera   FieldOfView="45" FarPlaneDistance="100" LookDirection="0,0,-3.4142135623731" NearPlaneDistance="0.1" Position="0,0,3.4142135623731" UpDirection="0,1,0"/>
+                <PerspectiveCamera FieldOfView="45" FarPlaneDistance="100" LookDirection="0,0,-3" NearPlaneDistance="0.1" Position="0,0,3" UpDirection="0,1,0"/>
             </Viewport3D.Camera>
         </Viewport3D>
 
