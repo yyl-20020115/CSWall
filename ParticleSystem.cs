@@ -6,7 +6,6 @@ using GraphAlgorithmTester.Colors;
 using System.Windows.Media.Imaging;
 using System;
 using System.IO;
-using System.Windows;
 
 namespace CSWall;
 
@@ -14,14 +13,13 @@ public class ParticleSystem
 {
     private readonly List<Particle> particles = new();
     private Particle[,] particle_matrix = new Particle[0, 0];
-
     public ModelVisual3D WorldVisual = new() { Content = new Model3DGroup() };
     public Model3DGroup? WorldModels => WorldVisual.Content as Model3DGroup;
 
     public int BoxEdgeWidth { get; set; } = 8;
     public int BoxHeight { get; set; } = 512;
-    protected Bitmap bitmap;
-    protected BitmapImage image;
+    protected Bitmap bitmap = null;
+    protected BitmapImage image = null;
 
     public ParticleSystem()
     {
@@ -80,24 +78,22 @@ public class ParticleSystem
     // Bitmap  to BitmapImage
     public static BitmapImage GetBitmapImageBybitmap(Bitmap bitmap)
     {
-        BitmapImage bitmapImage = new BitmapImage();
+        var bitmapImage = new BitmapImage();
         try
         {
-            using (MemoryStream ms = new MemoryStream())
-            {
-                bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = ms;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                bitmapImage.Freeze();
-            }
+            using var ms = new MemoryStream();
+            bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            bitmapImage.BeginInit();
+            bitmapImage.StreamSource = ms;
+            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+            bitmapImage.EndInit();
+            bitmapImage.Freeze();
+            return bitmapImage;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }
-        return bitmapImage;
     }
     protected void UpdateGeometry()
     {
@@ -171,8 +167,6 @@ public class ParticleSystem
             geometry.TextureCoordinates = textures;
             collection.Add(new GeometryModel3D(geometry, material));
 
-
-
             //wall_0
             positions = new();
             indices = new();
@@ -233,7 +227,6 @@ public class ParticleSystem
                     indices.Add(pc + 2 * x + 1);
                     indices.Add(pc + 2 * (x + 1) + 1);
                 }
-
             }
 
             var geometry_wall_1 = new MeshGeometry3D();
@@ -312,8 +305,6 @@ public class ParticleSystem
             geometry_wall_3.TriangleIndices = indices;
             geometry_wall_3.TextureCoordinates = textures;
             collection.Add(new GeometryModel3D(geometry_wall_3, material_wall_3));
-
-
             worldModels.Children = collection;
         }
     }
