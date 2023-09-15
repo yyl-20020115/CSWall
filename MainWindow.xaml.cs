@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -12,33 +11,35 @@ namespace CSWall;
 
 public partial class MainWindow : Window
 {
-    private ParticleSystem system;
+    private ParticleSystem PSystem;
 
     //声明摄像头
-    PerspectiveCamera myPCamera;
+    PerspectiveCamera Camera;
     //鼠标灵敏度调节
-    double mouseDeltaFactor = 2;
+    double MouseDeltaFactor = 2;
 
     public MainWindow()
     {
         InitializeComponent();
 
         //摄像头
-        myPCamera = new PerspectiveCamera();
-        myPCamera.Position = new Point3D(0, 0, 2000);
-        myPCamera.LookDirection = new Vector3D(0, 0, -1);
-        myPCamera.FieldOfView = 1000;
-        viewPort.Camera = myPCamera;
+        Camera = new PerspectiveCamera
+        {
+            Position = new Point3D(0, 0, 3000),
+            LookDirection = new Vector3D(0, 0, -1),
+            FieldOfView = 1000
+        };
+        viewPort.Camera = Camera;
 
-        this.system = new ParticleSystem();
-        BuildModel(system.WorldVisual);
+        this.PSystem = new ParticleSystem();
+        BuildModel(PSystem.WorldVisual);
         var filename = "dora.png";
         if (File.Exists(filename))
         {
             using var bitmap = Bitmap.FromFile(filename) as Bitmap;
             if(bitmap != null)
             {
-                this.system.SpawnParticleWithBoxes(bitmap);
+                this.PSystem.SpawnParticleWithBoxes(bitmap);
             }
         }
     }
@@ -51,7 +52,7 @@ public partial class MainWindow : Window
                 Bitmap.FromFile(files[0]) as Bitmap;
             if (bitmap != null)
             {
-                system.SpawnParticleWithBoxes(bitmap);
+                PSystem.SpawnParticleWithBoxes(bitmap);
             }
         }
     }
@@ -170,14 +171,14 @@ public partial class MainWindow : Window
             if (mouseLastPosition.X != newMousePosition.X)
             {
                 //进行水平旋转
-                HorizontalTransform(mouseLastPosition.X < newMousePosition.X, mouseDeltaFactor);//水平变换
+                HorizontalTransform(mouseLastPosition.X < newMousePosition.X, MouseDeltaFactor);//水平变换
             }
 
             if (mouseLastPosition.Y != newMousePosition.Y)// change position in the horizontal direction
 
             {
                 //进行垂直旋转
-                VerticalTransform(mouseLastPosition.Y > newMousePosition.Y, mouseDeltaFactor);//垂直变换 
+                VerticalTransform(mouseLastPosition.Y > newMousePosition.Y, MouseDeltaFactor);//垂直变换 
 
             }
 
@@ -193,8 +194,8 @@ public partial class MainWindow : Window
         double scaleFactor = 240;
         //120 near ,   -120 far
         //System.Diagnostics.Debug.WriteLine(e.Delta.ToString());
-        Point3D currentPosition = myPCamera.Position;
-        Vector3D lookDirection = myPCamera.LookDirection;
+        Point3D currentPosition = Camera.Position;
+        Vector3D lookDirection = Camera.LookDirection;
         lookDirection.Normalize();
 
         lookDirection *= scaleFactor;
@@ -209,21 +210,21 @@ public partial class MainWindow : Window
             //myPCamera.FieldOfView *= 1.2;
             currentPosition -= lookDirection;
         }
-        myPCamera.Position = currentPosition;
+        Camera.Position = currentPosition;
     }
 
     // 垂直变换
     private void VerticalTransform(bool upDown, double angleDeltaFactor)
     {
-        Vector3D postion = new(myPCamera.Position.X, myPCamera.Position.Y, myPCamera.Position.Z);
-        Vector3D rotateAxis = Vector3D.CrossProduct(postion, myPCamera.UpDirection);
+        Vector3D postion = new(Camera.Position.X, Camera.Position.Y, Camera.Position.Z);
+        Vector3D rotateAxis = Vector3D.CrossProduct(postion, Camera.UpDirection);
         RotateTransform3D rt3d = new();
         AxisAngleRotation3D rotate = new(rotateAxis, angleDeltaFactor * (upDown ? 1 : -1));
         rt3d.Rotation = rotate;
         Matrix3D matrix = rt3d.Value;
-        Point3D newPostition = matrix.Transform(myPCamera.Position);
-        myPCamera.Position = newPostition;
-        myPCamera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
+        Point3D newPostition = matrix.Transform(Camera.Position);
+        Camera.Position = newPostition;
+        Camera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
 
         //update the up direction
         //Vector3D newUpDirection = Vector3D.CrossProduct(myPCamera.LookDirection, rotateAxis);
@@ -233,22 +234,22 @@ public partial class MainWindow : Window
     // 水平变换：
     private void HorizontalTransform(bool leftRight, double angleDeltaFactor)
     {
-        Vector3D postion = new(myPCamera.Position.X, myPCamera.Position.Y, myPCamera.Position.Z);
-        Vector3D rotateAxis = myPCamera.UpDirection;
+        Vector3D postion = new(Camera.Position.X, Camera.Position.Y, Camera.Position.Z);
+        Vector3D rotateAxis = Camera.UpDirection;
         RotateTransform3D rt3d = new();
         AxisAngleRotation3D rotate = new(rotateAxis, angleDeltaFactor * (leftRight ? 1 : -1));
         rt3d.Rotation = rotate;
         Matrix3D matrix = rt3d.Value;
-        Point3D newPostition = matrix.Transform(myPCamera.Position);
-        myPCamera.Position = newPostition;
-        myPCamera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
+        Point3D newPostition = matrix.Transform(Camera.Position);
+        Camera.Position = newPostition;
+        Camera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
     }
 
     private void Window_KeyDown(object sender, KeyEventArgs e)
     {
-        var p = myPCamera.Position;
+        var p = Camera.Position;
         var any = false;
-        var offset = mouseDeltaFactor;
+        var offset = MouseDeltaFactor;
         switch (e.Key)
         {
             case Key.Left:
@@ -269,6 +270,6 @@ public partial class MainWindow : Window
                 break;
         }
         if (any)
-            myPCamera.Position = p;
+            Camera.Position = p;
     }
 }
