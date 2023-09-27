@@ -1,33 +1,36 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace CSWall;
 
 public static class BitmapUtils
 {
-    public static Bitmap GetBitmapByImageSource(BitmapSource source)
+    public static Bitmap GetBitmapByImageSource(BitmapSource source, bool isPng = false)
     {
         using var ms = new MemoryStream();
-        var encoder = new BmpBitmapEncoder();
+        BitmapEncoder encoder = isPng
+          ? new PngBitmapEncoder()
+          : new BmpBitmapEncoder()
+          ;
         encoder.Frames.Add(BitmapFrame.Create(source));
         encoder.Save(ms);
         var bp = new Bitmap(ms);
         return new Bitmap(bp);
     }
-    //BitmapImage  to  Bitmap
+    //BitmapImage to Bitmap
     public static Bitmap GetBitmapByBitmapImage(BitmapImage bitmapImage, bool isPng = false)
     {
-        var outStream = new MemoryStream();
-        BitmapEncoder enc = isPng
+        using var ms = new MemoryStream();
+        BitmapEncoder encoder = isPng
             ? new PngBitmapEncoder()
             : new BmpBitmapEncoder()
             ;
-        enc.Frames.Add(BitmapFrame.Create(bitmapImage));
-        enc.Save(outStream);
-        return new Bitmap(outStream);
+        encoder.Frames.Add(BitmapFrame.Create(bitmapImage));
+        encoder.Save(ms);
+        var bp = new Bitmap(ms);
+        return new Bitmap(bp);
     }
     // Bitmap  to BitmapImage
     public static BitmapImage GetBitmapImageBybitmap(Bitmap bitmap)
