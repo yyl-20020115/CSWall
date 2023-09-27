@@ -295,7 +295,6 @@ public class ParticleSystem
                         indices.Add(pc + 2 * (y + 1) + 1);
                         indices.Add(pc + 2 * y + 1);
                     }
-
                 }
 
                 var geometry_wall_3 = new MeshGeometry3D();
