@@ -5,6 +5,8 @@ using System.Windows.Media.Media3D;
 using System.Windows.Media.Effects;
 using System.Drawing;
 using System.IO;
+using System.Windows.Media.Imaging;
+using System.Windows.Interop;
 
 namespace CSWall;
 
@@ -42,6 +44,8 @@ public partial class MainWindow : Window
                 this.PSystem.SpawnParticleWithBoxes(bitmap);
             }
         }
+
+        
     }
     private void Grid_Drop(object sender, DragEventArgs e)
     {
@@ -247,6 +251,21 @@ public partial class MainWindow : Window
 
     private void Window_KeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.V && Keyboard.IsKeyDown(Key.LeftCtrl))
+        {
+            if (Clipboard.ContainsImage())
+            {
+                var image = Clipboard.GetImage();
+                if(image is BitmapSource source)
+                {
+                    this.PSystem.SpawnParticleWithBoxes(
+                        BitmapUtils.GetBitmapByImageSource(source));
+                }
+            }
+
+            return ;
+        }
+
         var p = Camera.Position;
         var any = false;
         var offset = MouseDeltaFactor;

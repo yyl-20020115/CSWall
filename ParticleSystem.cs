@@ -57,42 +57,10 @@ public class ParticleSystem
                 particle_matrix[iy, ix] = p;
             }
         }
-        this.image = GetBitmapImageBybitmap(this.bitmap = bitmap);
+        this.image = BitmapUtils.GetBitmapImageBybitmap(this.bitmap = bitmap);
         this.UpdateGeometry();
     }
 
-    //BitmapImage  to  Bitmap
-    public static Bitmap GetBitmapByBitmapImage(BitmapImage bitmapImage, bool isPng = false)
-    {
-        var outStream = new MemoryStream();
-        BitmapEncoder enc = isPng 
-            ? new PngBitmapEncoder() 
-            : new BmpBitmapEncoder()
-            ;
-        enc.Frames.Add(BitmapFrame.Create(bitmapImage));
-        enc.Save(outStream);
-        return new Bitmap(outStream);
-    }
-    // Bitmap  to BitmapImage
-    public static BitmapImage GetBitmapImageBybitmap(Bitmap bitmap)
-    {
-        var bitmapImage = new BitmapImage();
-        try
-        {
-            using var ms = new MemoryStream();
-            bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-            bitmapImage.BeginInit();
-            bitmapImage.StreamSource = ms;
-            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-            bitmapImage.EndInit();
-            bitmapImage.Freeze();
-            return bitmapImage;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-    }
     protected void UpdateGeometry()
     {
         var light = new AmbientLight
@@ -102,8 +70,10 @@ public class ParticleSystem
         var worldModels = WorldModels;
         if (worldModels != null)
         {
-            var collection = new Model3DCollection(); ;
-            collection.Add(light);
+            var collection = new Model3DCollection
+            {
+                light
+            };
 
             var positions = new Point3DCollection();
             var indices = new Int32Collection();
