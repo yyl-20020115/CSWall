@@ -4,8 +4,6 @@ using System.Windows.Media;
 using System.Drawing;
 using GraphAlgorithmTester.Colors;
 using System.Windows.Media.Imaging;
-using System;
-using System.IO;
 
 namespace CSWall;
 
@@ -15,12 +13,12 @@ public class ParticleSystem
     private Particle[,] particle_matrix = new Particle[0, 0];
     public ModelVisual3D WorldVisual = new() { Content = new Model3DGroup() };
     public Model3DGroup? WorldModels => WorldVisual.Content as Model3DGroup;
-    public bool WithWalls { get; set; }=false;
+    public bool WithWalls { get; set; } = false;
     public int BoxEdgeWidth { get; set; } = 8;
     public int BoxHeight { get; set; } = 512;
-    protected Bitmap bitmap = null;
-    protected BitmapImage image = null;
-    protected SolidColorBrush WallBrush = new (Colors.White);
+    protected Bitmap? bitmap = null;
+    protected BitmapImage? image = null;
+    protected SolidColorBrush WallBrush = new(Colors.White);
 
     public ParticleSystem()
     {
@@ -63,16 +61,15 @@ public class ParticleSystem
 
     protected void UpdateGeometry()
     {
-        var light = new AmbientLight
-        {
-            Color = Colors.White,
-        };
         var worldModels = WorldModels;
         if (worldModels != null)
         {
             var collection = new Model3DCollection
             {
-                light
+                new AmbientLight
+                {
+                    Color = Colors.White,
+                }
             };
 
             var positions = new Point3DCollection();
@@ -162,7 +159,7 @@ public class ParticleSystem
                         indices.Add(pc + 2 * (x + 1) + 1);
                         indices.Add(pc + 2 * x + 1);
                     }
-                } 
+                }
 
                 var geometry_wall_0 = new MeshGeometry3D();
                 var material_wall_0 = new DiffuseMaterial(this.WallBrush);
@@ -273,116 +270,6 @@ public class ParticleSystem
                 geometry_wall_3.TriangleIndices = indices;
                 geometry_wall_3.TextureCoordinates = textures;
                 collection.Add(new GeometryModel3D(geometry_wall_3, material_wall_3));
-            }
-            worldModels.Children = collection;
-        }
-    }
-
-    protected void UpdateGeometryWithBoxes()
-    {
-        var myDirectionalLight = new AmbientLight
-        {
-            Color = Colors.White,
-        };
-        var worldModels = WorldModels;
-        if (worldModels != null)
-        {
-            var collection = new Model3DCollection(); ;
-            collection.Add(myDirectionalLight);
-
-            for (var i = 0; i < particles.Count; ++i)
-            {
-                var particle = particles[i];
-                var geometry = new MeshGeometry3D();
-                var color = particle.Color;
-                if (Colors.Black == color) continue;
-                var brush = new SolidColorBrush(color);
-                var material = new DiffuseMaterial(
-                    brush);
-
-                var model3D = new GeometryModel3D(geometry, material);
-                var positions = new Point3DCollection();
-                var indices = new Int32Collection();
-
-                //0,0,0
-                var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z);
-                //1,0,0
-                var p1 = new Point3D(particle.Position.X + particle.Thickness, particle.Position.Y, particle.Position.Z);
-                //1,1,0
-                var p2 = new Point3D(particle.Position.X + particle.Thickness, particle.Position.Y + particle.Thickness, particle.Position.Z);
-                //0,1,0
-                var p3 = new Point3D(particle.Position.X, particle.Position.Y + particle.Thickness, particle.Position.Z);
-                //0,0,1
-                var p4 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + particle.Height);
-                //1,0,1
-                var p5 = new Point3D(particle.Position.X + particle.Thickness, particle.Position.Y, particle.Position.Z + particle.Height);
-                //1,1,1
-                var p6 = new Point3D(particle.Position.X + particle.Thickness, particle.Position.Y + particle.Thickness, particle.Position.Z + particle.Height);
-                //0,1,1
-                var p7 = new Point3D(particle.Position.X, particle.Position.Y + particle.Thickness, particle.Position.Z + particle.Height);
-
-                positions.Add(p0);//0,0,0 -> 0
-                positions.Add(p1);//1,0,0 -> 1
-                positions.Add(p2);//1,1,0 -> 2
-                positions.Add(p3);//0,1,0 -> 3
-                positions.Add(p4);//0,0,1 -> 4
-                positions.Add(p5);//1,0,1 -> 5
-                positions.Add(p6);//1,1,1 -> 6
-                positions.Add(p7);//0,1,1 -> 7
-
-                var positionIndex = 0;// i << 3;
-                //BOTTOM (Z=0)
-                indices.Add(positionIndex + 3);
-                indices.Add(positionIndex + 1);
-                indices.Add(positionIndex + 0);
-
-                indices.Add(positionIndex + 3);
-                indices.Add(positionIndex + 2);
-                indices.Add(positionIndex + 1);
-
-                //Right
-                indices.Add(positionIndex + 4);
-                indices.Add(positionIndex + 3);
-                indices.Add(positionIndex + 0);
-
-                indices.Add(positionIndex + 7);
-                indices.Add(positionIndex + 3);
-                indices.Add(positionIndex + 4);
-
-                //TOP
-                indices.Add(positionIndex + 4);
-                indices.Add(positionIndex + 6);
-                indices.Add(positionIndex + 7);
-
-                indices.Add(positionIndex + 4);
-                indices.Add(positionIndex + 5);
-                indices.Add(positionIndex + 6);
-                //
-                indices.Add(positionIndex + 1);
-                indices.Add(positionIndex + 4);
-                indices.Add(positionIndex + 0);
-
-                indices.Add(positionIndex + 5);
-                indices.Add(positionIndex + 4);
-                indices.Add(positionIndex + 1);
-
-                indices.Add(positionIndex + 1);
-                indices.Add(positionIndex + 2);
-                indices.Add(positionIndex + 6);
-                indices.Add(positionIndex + 6);
-                indices.Add(positionIndex + 5);
-                indices.Add(positionIndex + 1);
-                indices.Add(positionIndex + 2);
-                indices.Add(positionIndex + 3);
-                indices.Add(positionIndex + 7);
-                indices.Add(positionIndex + 7);
-                indices.Add(positionIndex + 6);
-                indices.Add(positionIndex + 2);
-
-                geometry.Positions = positions;
-                geometry.TriangleIndices = indices;
-
-                collection.Add(model3D);
             }
             worldModels.Children = collection;
         }

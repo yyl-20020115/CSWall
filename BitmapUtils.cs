@@ -9,43 +9,43 @@ public static class BitmapUtils
 {
     public static Bitmap GetBitmapByImageSource(BitmapSource source, bool isPng = false)
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
         BitmapEncoder encoder = isPng
           ? new PngBitmapEncoder()
           : new BmpBitmapEncoder()
           ;
         encoder.Frames.Add(BitmapFrame.Create(source));
-        encoder.Save(ms);
-        var bp = new Bitmap(ms);
+        encoder.Save(stream);
+        using var bp = new Bitmap(stream);
         return new Bitmap(bp);
     }
     //BitmapImage to Bitmap
     public static Bitmap GetBitmapByBitmapImage(BitmapImage bitmapImage, bool isPng = false)
     {
-        using var ms = new MemoryStream();
+        using var stream = new MemoryStream();
         BitmapEncoder encoder = isPng
             ? new PngBitmapEncoder()
             : new BmpBitmapEncoder()
             ;
         encoder.Frames.Add(BitmapFrame.Create(bitmapImage));
-        encoder.Save(ms);
-        var bp = new Bitmap(ms);
+        encoder.Save(stream);
+        using var bp = new Bitmap(stream);
         return new Bitmap(bp);
     }
     // Bitmap  to BitmapImage
     public static BitmapImage GetBitmapImageBybitmap(Bitmap bitmap)
     {
-        var bitmapImage = new BitmapImage();
+        var image = new BitmapImage();
         try
         {
-            using var ms = new MemoryStream();
-            bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-            bitmapImage.BeginInit();
-            bitmapImage.StreamSource = ms;
-            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-            bitmapImage.EndInit();
-            bitmapImage.Freeze();
-            return bitmapImage;
+            using var stream = new MemoryStream();
+            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+            image.BeginInit();
+            image.StreamSource = stream;
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            image.EndInit();
+            image.Freeze();
+            return image;
         }
         catch (Exception)
         {

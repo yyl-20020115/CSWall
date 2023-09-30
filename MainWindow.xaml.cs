@@ -13,13 +13,14 @@ namespace CSWall;
 
 public partial class MainWindow : Window
 {
-    private ParticleSystem PSystem;
+    //鼠标灵敏度调节
+    const double MouseDeltaFactor = 2;
+
+    readonly ParticleSystem PSystem;
 
     //声明摄像头
-    PerspectiveCamera Camera;
-    //鼠标灵敏度调节
-    double MouseDeltaFactor = 2;
-
+    readonly PerspectiveCamera Camera;
+    
     public MainWindow()
     {
         InitializeComponent();
@@ -33,31 +34,18 @@ public partial class MainWindow : Window
         };
         viewPort.Camera = Camera;
 
-        this.PSystem = new ParticleSystem();
-        BuildModel(PSystem.WorldVisual);
-        var filename = "dora.png";
-        if (File.Exists(filename))
+        BuildModel((this.PSystem = new ParticleSystem()).WorldVisual);
+        if (!this.TryLoadClipboardImage())
         {
-            using var bitmap = Bitmap.FromFile(filename) as Bitmap;
-            if(bitmap != null)
-            {
-                this.PSystem.SpawnParticleWithBoxes(bitmap);
-            }
+            this.TryLoadFile();
         }
-
-        
     }
     private void Grid_Drop(object sender, DragEventArgs e)
     {
-        var f = e.Data.GetData(DataFormats.FileDrop);
-        if (f is string[] files && files.Length == 1)
+        var data = e.Data.GetData(DataFormats.FileDrop);
+        if (data is string[] files && files.Length == 1)
         {
-            using var bitmap =
-                Bitmap.FromFile(files[0]) as Bitmap;
-            if (bitmap != null)
-            {
-                PSystem.SpawnParticleWithBoxes(bitmap);
-            }
+            this.TryLoadFile(files[0]);
         }
     }
     public void BuildModel(ModelVisual3D WorldModels)
@@ -128,12 +116,10 @@ public partial class MainWindow : Window
     {
         //MessageBox.Show(rawresult.ToString());
         // RayHitTestResult rayResult = rawresult as RayHitTestResult;
-        var rayResult = rawresult as RayHitTestResult;
-        if (rayResult != null)
+        if (rawresult is RayHitTestResult rayResult)
         {
             //RayMeshGeometry3DHitTestResult rayMeshResult = rayResult as RayMeshGeometry3DHitTestResult;
-            var rayMeshResultrayResult = rayResult as RayHitTestResult;
-            if (rayMeshResultrayResult != null)
+            if (rayResult is not null)
             {
                 //GeometryModel3D hitgeo = rayMeshResult.ModelHit as GeometryModel3D;
                 var visual3D = rawresult.VisualHit as ModelVisual3D;
@@ -149,7 +135,7 @@ public partial class MainWindow : Window
     //鼠标位置
     System.Windows.Point mouseLastPosition;
 
-    private void vp_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void Vp_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         mouseLastPosition = e.GetPosition(this);
         //RayHitTestParameters hitParams = new RayHitTestParameters(myPCamera.Position, myPCamera.LookDirection);
@@ -187,9 +173,7 @@ public partial class MainWindow : Window
             }
 
             mouseLastPosition = newMousePosition;
-
         }
-
     }
 
     //鼠标滚轮缩放
@@ -198,10 +182,9 @@ public partial class MainWindow : Window
         double scaleFactor = 240;
         //120 near ,   -120 far
         //System.Diagnostics.Debug.WriteLine(e.Delta.ToString());
-        Point3D currentPosition = Camera.Position;
-        Vector3D lookDirection = Camera.LookDirection;
+        var currentPosition = Camera.Position;
+        var lookDirection = Camera.LookDirection;
         lookDirection.Normalize();
-
         lookDirection *= scaleFactor;
 
         if (e.Delta > 0)//getting near
@@ -248,21 +231,38 @@ public partial class MainWindow : Window
         Camera.Position = newPostition;
         Camera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
     }
-
+    private bool TryLoadFile(string file = "dora.png")
+    {
+        if (File.Exists(file))
+        {
+            using var bitmap = Image.FromFile(file) as Bitmap;
+            if (bitmap != null)
+            {
+                this.PSystem.SpawnParticleWithBoxes(bitmap);
+                return true;
+            }
+        }
+        return false;
+    }
+    private bool TryLoadClipboardImage()
+    {
+        if (Clipboard.ContainsImage())
+        {
+            var image = Clipboard.GetImage();
+            if (image is BitmapSource source)
+            {
+                this.PSystem.SpawnParticleWithBoxes(
+                    BitmapUtils.GetBitmapByImageSource(source));
+                return true;
+            }
+        }
+        return false;
+    }
     private void Window_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.V && Keyboard.IsKeyDown(Key.LeftCtrl))
         {
-            if (Clipboard.ContainsImage())
-            {
-                var image = Clipboard.GetImage();
-                if(image is BitmapSource source)
-                {
-                    this.PSystem.SpawnParticleWithBoxes(
-                        BitmapUtils.GetBitmapByImageSource(source));
-                }
-            }
-
+            this.TryLoadClipboardImage();
             return ;
         }
 

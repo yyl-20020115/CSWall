@@ -6,11 +6,13 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Globalization;
 using System.IO;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CSWall;
-public class ModelVisual3DWithName : ModelVisual3D { 
-    public string Name { get; set; } 
-    public object Tag { get; set; } 
+public class ModelVisual3DWithName : ModelVisual3D
+{
+    public string Name { get; set; }
+    public object Tag { get; set; }
 }
 public class WavefrontObjLoader
 {
@@ -34,11 +36,11 @@ public class WavefrontObjLoader
     private int nextFaceIndex;
     // private SceneViewModel sceneViewModel;
     private static readonly char[] Separators = new char[] { ' ', '\t' };
-    private Dictionary<int, List<int>> smoothingGroups;
-    private List<Point> textureCoordinates;
-    private int totalGeneratedVertices;
-    private int totalVertices;
-    private int totalVerticesInObj;
+    private Dictionary<int, List<int>> smoothingGroups = new();
+    private List<Point> textureCoordinates = new();
+    private int totalGeneratedVertices = 0;
+    private int totalVertices = 0;
+    private int totalVerticesInObj = 0;
     private List<Vector3D> vertexNormals;
 
     //public WavefrontObjLoader(SceneViewModel sceneViewModel, IMessageLoggingService logger, IMessageDisplayService manager)
@@ -47,30 +49,32 @@ public class WavefrontObjLoader
     //    this.logger = logger;
     //    this.manager = manager;
     //}
-    private Dictionary<string, ModelVisual3DWithName> dictionaries;
+    private readonly Dictionary<string, ModelVisual3DWithName> dictionaries;
 
     public WavefrontObjLoader()
     {
         dictionaries = new Dictionary<string, ModelVisual3DWithName>();
     }
 
-    private GeometryModel3D BuildGeometryModel3DFromGeometry(Geometry geometry)
+    private GeometryModel3D? BuildGeometryModel3DFromGeometry(Geometry geometry)
     {
-        GeometryModel3D modeld = new GeometryModel3D();
-        MeshGeometry3D geometryd = new MeshGeometry3D();
-        SortedDictionary<UniqueVertex, int> dictionary = new SortedDictionary<UniqueVertex, int>(new UniqueVertexComparer());
+        var modeld = new GeometryModel3D();
+        var geometryd = new MeshGeometry3D();
+        var dictionary = new SortedDictionary<UniqueVertex, int>(new UniqueVertexComparer());
         geometryd.TriangleIndices = new Int32Collection();
         bool flag = false;
         bool flag2 = false;
-        Rect3D empty = Rect3D.Empty;
+        var empty = Rect3D.Empty;
         for (int i = geometry.FirstFaceIndex; i <= geometry.LastFaceIndex; i++)
         {
-            Face face = this.faces[i];
-            int[] numArray = new int[face.CoordinateIndices.Count];
+            var face = this.faces[i];
+            var numArray = new int[face.CoordinateIndices.Count];
             for (int k = 0; k < face.CoordinateIndices.Count; k++)
             {
-                UniqueVertex key = new UniqueVertex();
-                key.Coordinate = this.coordinates[face.CoordinateIndices[k]];
+                var key = new UniqueVertex
+                {
+                    Coordinate = this.coordinates[face.CoordinateIndices[k]]
+                };
                 if (face.NormalIndices != null)
                 {
                     key.Normal = this.vertexNormals[face.NormalIndices[k]];
@@ -81,14 +85,13 @@ public class WavefrontObjLoader
                     key.TextureCoordinates = this.textureCoordinates[face.TextureCoordinateIndices[k]];
                     flag2 = true;
                 }
-                int num3 = -1;
-                if (!dictionary.TryGetValue(key, out num3))
+                if (!dictionary.TryGetValue(key, out int n))
                 {
-                    num3 = dictionary.Count;
-                    dictionary.Add(key, num3);
+                    n = dictionary.Count;
+                    dictionary.Add(key, -1);
                     empty.Union(key.Coordinate);
                 }
-                numArray[k] = num3;
+                numArray[k] = -1;
             }
             for (int m = 1; m < (numArray.Length - 1); m++)
             {
@@ -116,9 +119,9 @@ public class WavefrontObjLoader
             geometryd.TextureCoordinates = new PointCollection(count);
         }
         Point3D center = empty.Location + new Vector3D(empty.SizeX / 2.0, empty.SizeY / 2.0, empty.SizeZ / 2.0);
-        Point3D pointd2 = new Point3D();
-        Vector3D vectord = new Vector3D();
-        Point point = new Point();
+        Point3D pointd2 = new();
+        Vector3D vectord = new();
+        Point point = new();
         for (int j = 0; j < count; j++)
         {
             geometryd.Positions.Add(pointd2);
@@ -155,7 +158,7 @@ public class WavefrontObjLoader
 
     private static Material CreateMaterial(ObjMaterial currentMaterial)
     {
-        MaterialGroup group = new MaterialGroup();
+        var group = new MaterialGroup();
         if (currentMaterial.AmbientTexture != null)
         {
             group.Children.Add(new EmissiveMaterial(new ImageBrush(currentMaterial.AmbientTexture)));
@@ -198,17 +201,14 @@ public class WavefrontObjLoader
 
     private static Material DefaultMaterial()
     {
-        Random random = new Random();
-        Material material = new DiffuseMaterial(new SolidColorBrush(Color.FromScRgb(1f, (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble())));
+        Random random = new();
+        var material = new DiffuseMaterial(new SolidColorBrush(Color.FromScRgb(1f, (float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble())));
         return DefaultWhiteMaterial;
     }
 
     private bool FinishCurrentGeometry(Group group, Material material, string name, string materialName)
     {
-        if (name == null)
-        {
-            name = materialName;
-        }
+        name ??= materialName;
         if ((this.faces.Count - 1) >= this.nextFaceIndex)
         {
             group.Geometry.Add(new Geometry(name, material, this.nextFaceIndex, this.faces.Count - 1));
@@ -277,9 +277,9 @@ public class WavefrontObjLoader
         return new Point((Math.Asin(vectord.X) / Math.PI) + 0.5, 1.0 - ((Math.Asin(vectord.Y) / Math.PI) + 0.5));
     }
 
-    private Dictionary<string, ObjMaterial> LoadMtlFile(string mtlFilename)
+    private Dictionary<string, ObjMaterial>? LoadMtlFile(string mtlFilename)
     {
-        Dictionary<string, ObjMaterial> materialLibrary = null;
+        Dictionary<string, ObjMaterial>? materialLibrary = null;
         StreamReader reader;
         try
         {
@@ -301,23 +301,18 @@ public class WavefrontObjLoader
         }
         finally
         {
-            if (reader2 != null)
-            {
-                reader2.Dispose();
-            }
+            reader2?.Dispose();
         }
         return materialLibrary;
     }
 
-    public ModelVisual3DWithName LoadObjFile(string targetFile)
+    public ModelVisual3DWithName? LoadObjFile(string targetFile)
     {
-        using (Stream fs = new FileStream(targetFile, FileMode.Open, FileAccess.Read))
-        {
-            return LoadObjFile(new StreamReader(fs),
-                               Path.GetFullPath(targetFile).Replace(
-                               Path.GetFileName(targetFile), ""),
-                               Path.GetFileName(targetFile));
-        }
+        using var fs = new FileStream(targetFile, FileMode.Open, FileAccess.Read);
+        return LoadObjFile(new StreamReader(fs),
+                           Path.GetFullPath(targetFile).Replace(
+                           Path.GetFileName(targetFile), ""),
+                           Path.GetFileName(targetFile));
     }
 
 
@@ -334,15 +329,15 @@ public class WavefrontObjLoader
         this.totalVerticesInObj = 0;
         this.totalVertices = 0;
         this.totalGeneratedVertices = 0;
-        Dictionary<string, ObjMaterial> dictionary = null;
+        Dictionary<string, ObjMaterial>? dictionary = null;
         bool flag = false;
         string name = "DefaultGroup";
-        string str2 = null;
+        string? str2 = null;
         string materialName = "DefaultMaterial";
         int key = 0;
         Material material2 = DefaultMaterial();
-        Group group = new Group(name);
-        string str4 = string.Empty;
+        Group group = new(name);
+        string? str4;
         while ((str4 = streamReader.ReadLine()) != null)
         {
             int length = str4.IndexOfAny(CommentCharacters);
@@ -351,10 +346,10 @@ public class WavefrontObjLoader
                 str4 = str4.Substring(0, length);
             }
             int num3 = str4.IndexOfAny(Separators);
-            string line = string.Empty;
             string content = string.Empty;
             if (str4.Trim().Length != 0)
             {
+                string line;
                 if (num3 != -1)
                 {
                     line = str4.Substring(0, num3);
@@ -385,8 +380,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.Face:
                         {
-                            Face face;
-                            if (!ParseFace(content, out face) || !this.NormalizeFaceIndices(face))
+                            if (!ParseFace(content, out Face face) || !this.NormalizeFaceIndices(face))
                             {
                                 goto Label_0301;
                             }
@@ -467,8 +461,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.GeometricVertex:
                         {
-                            Point3D pointd;
-                            if (!ParseVertex(content, out pointd))
+                            if (!ParseVertex(content, out Point3D pointd))
                             {
                                 goto Label_0345;
                             }
@@ -478,8 +471,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.VertexNormal:
                         {
-                            Vector3D vectord;
-                            if (!ParseVertexNormal(content, out vectord))
+                            if (!ParseVertexNormal(content, out Vector3D vectord))
                             {
                                 goto Label_037B;
                             }
@@ -488,8 +480,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.TextureVertex:
                         {
-                            Point point;
-                            if (!ParseVertexTextureCoordinate(content, out point))
+                            if (!ParseVertexTextureCoordinate(content, out Point point))
                             {
                                 goto Label_03B1;
                             }
@@ -523,7 +514,7 @@ public class WavefrontObjLoader
             foreach (KeyValuePair<int, List<int>> pair in this.smoothingGroups)
             {
                 List<int> list2 = pair.Value;
-                Dictionary<int, Vector3D> dictionary2 = new Dictionary<int, Vector3D>();
+                Dictionary<int, Vector3D> dictionary2 = new();
                 for (int i = 0; i < list2.Count; i++)
                 {
                     Face face2 = this.faces[list2[i]];
@@ -531,8 +522,7 @@ public class WavefrontObjLoader
                     {
                         for (int k = 0; k < face2.CoordinateIndices.Count; k++)
                         {
-                            Vector3D normal;
-                            if (!dictionary2.TryGetValue(face2.CoordinateIndices[k], out normal))
+                            if (!dictionary2.TryGetValue(face2.CoordinateIndices[k], out Vector3D normal))
                             {
                                 normal = face2.Normal;
                                 dictionary2.Add(face2.CoordinateIndices[k], normal);
@@ -545,7 +535,7 @@ public class WavefrontObjLoader
                         }
                     }
                 }
-                Dictionary<int, int> dictionary3 = new Dictionary<int, int>();
+                Dictionary<int, int> dictionary3 = new();
                 foreach (KeyValuePair<int, Vector3D> pair2 in dictionary2)
                 {
                     Vector3D item = pair2.Value;
@@ -571,16 +561,7 @@ public class WavefrontObjLoader
         return visuald;
     }
 
-    public ModelVisual3DWithName Find(string name)
-    {
-        ModelVisual3DWithName model;
-        if (dictionaries.TryGetValue(name, out model))
-        {
-            return model;
-        }
-
-        return null;
-    }
+    public ModelVisual3DWithName? Find(string name) => dictionaries.TryGetValue(name, out var model) ? model : null;
 
     public void Add(string name, ModelVisual3DWithName modelVisual3D)
     {
@@ -598,9 +579,9 @@ public class WavefrontObjLoader
         }
     }
 
-    private BitmapImage LoadTexture(string rootPath, string content)
+    private static BitmapImage? LoadTexture(string rootPath, string content)
     {
-        BitmapImage image = null;
+        BitmapImage? image = null;
         if (content[0] == '-')
         {
             content.IndexOfAny(Separators);
@@ -625,7 +606,7 @@ public class WavefrontObjLoader
             if (face.CoordinateIndices[i] < 0)
             {
                 List<int> list;
-                int num2;
+                int num2 = 0;
                 (list = face.CoordinateIndices)[num2 = i] = list[num2] + this.coordinates.Count;
             }
             else
@@ -685,9 +666,6 @@ public class WavefrontObjLoader
 
     private static bool ParseColor(string content, out Color color)
     {
-        float num;
-        float num2;
-        float num3;
         string[] strArray = content.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
         if (strArray.Length < 3)
         {
@@ -695,25 +673,24 @@ public class WavefrontObjLoader
             return false;
         }
         bool flag = true;
-        flag &= float.TryParse(strArray[0], NumberStyles.Float, CultureInfo.InvariantCulture, out num);
-        flag &= float.TryParse(strArray[1], NumberStyles.Float, CultureInfo.InvariantCulture, out num2);
-        flag &= float.TryParse(strArray[2], NumberStyles.Float, CultureInfo.InvariantCulture, out num3);
+        flag &= float.TryParse(strArray[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float num);
+        flag &= float.TryParse(strArray[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float num2);
+        flag &= float.TryParse(strArray[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float num3);
         color = Color.FromScRgb(1f, num, num2, num3);
         return flag;
     }
 
     private static bool ParseFace(string content, out Face face)
     {
-        face = new Face();
-        face.CoordinateIndices = new List<int>();
-        face.NormalIndices = new List<int>();
-        face.TextureCoordinateIndices = new List<int>();
+        face = new Face
+        {
+            CoordinateIndices = new List<int>(),
+            NormalIndices = new List<int>(),
+            TextureCoordinateIndices = new List<int>()
+        };
         foreach (string str in content.Split(Separators, StringSplitOptions.RemoveEmptyEntries))
         {
-            int num;
-            int num2;
-            int num3;
-            if (!ParseVertexReference(str, out num, out num2, out num3))
+            if (!ParseVertexReference(str, out int num, out int num2, out int num3))
             {
                 return false;
             }
@@ -768,9 +745,11 @@ public class WavefrontObjLoader
     private void ParseMtlFile(StreamReader streamReader, string rootPath, ref Dictionary<string, ObjMaterial> materialLibrary)
     {
         materialLibrary = new Dictionary<string, ObjMaterial>();
-        ObjMaterial currentMaterial = new ObjMaterial();
-        currentMaterial.Alpha = 1.0;
-        string str = string.Empty;
+        ObjMaterial currentMaterial = new()
+        {
+            Alpha = 1.0
+        };
+        string? str;
         while ((str = streamReader.ReadLine()) != null)
         {
             str = str.TrimStart(Separators);
@@ -779,7 +758,7 @@ public class WavefrontObjLoader
             string s = string.Empty;
             if (str.Trim().Length != 0)
             {
-                BitmapImage image;
+                BitmapImage? image;
                 if (length != -1)
                 {
                     line = str.Substring(0, length);
@@ -787,7 +766,7 @@ public class WavefrontObjLoader
                     {
                         length++;
                     }
-                    s = str.Substring(length);
+                    s = str[length..];
                 }
                 else
                 {
@@ -817,8 +796,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.IlluminationMode:
                         {
-                            int num2;
-                            if (!int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out num2))
+                            if (!int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out int num2))
                             {
                                 goto Label_015A;
                             }
@@ -827,8 +805,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.Alpha:
                         {
-                            double num3;
-                            if (!double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out num3))
+                            if (!double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double num3))
                             {
                                 goto Label_0192;
                             }
@@ -837,8 +814,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.Ambient:
                         {
-                            Color color2;
-                            if (!ParseColor(s, out color2))
+                            if (!ParseColor(s, out Color color2))
                             {
                                 goto Label_01C0;
                             }
@@ -847,8 +823,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.Diffuse:
                         {
-                            Color color3;
-                            if (!ParseColor(s, out color3))
+                            if (!ParseColor(s, out Color color3))
                             {
                                 goto Label_01EE;
                             }
@@ -857,8 +832,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.Specular:
                         {
-                            Color color4;
-                            if (!ParseColor(s, out color4))
+                            if (!ParseColor(s, out Color color4))
                             {
                                 goto Label_02A8;
                             }
@@ -867,8 +841,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.Emissive:
                         {
-                            Color color5;
-                            if (!ParseColor(s, out color5))
+                            if (!ParseColor(s, out Color color5))
                             {
                                 goto Label_02D6;
                             }
@@ -877,7 +850,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.AmbientTextureFilename:
                         {
-                            image = this.LoadTexture(rootPath, s);
+                            image = LoadTexture(rootPath, s);
                             if (image != null)
                             {
                                 currentMaterial.AmbientTextureFilename = s;
@@ -887,7 +860,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.BumpTextureFilename:
                         {
-                            image = this.LoadTexture(rootPath, s);
+                            image = LoadTexture(rootPath, s);
                             if (image != null)
                             {
                                 currentMaterial.BumpTextureFilename = s;
@@ -897,7 +870,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.DiffuseTextureFilename:
                         {
-                            image = this.LoadTexture(rootPath, s);
+                            image = LoadTexture(rootPath, s);
                             if (image != null)
                             {
                                 currentMaterial.DiffuseTextureFilename = s;
@@ -907,7 +880,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.ReflectionTextureFilename:
                         {
-                            image = this.LoadTexture(rootPath, s);
+                            image = LoadTexture(rootPath, s);
                             if (image != null)
                             {
                                 currentMaterial.ReflectionTextureFilename = s;
@@ -917,7 +890,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.SpecularTextureFilename:
                         {
-                            image = this.LoadTexture(rootPath, s);
+                            image = LoadTexture(rootPath, s);
                             if (image != null)
                             {
                                 currentMaterial.SpecularTextureFilename = s;
@@ -927,7 +900,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.ShininessTextureFilename:
                         {
-                            image = this.LoadTexture(rootPath, s);
+                            image = LoadTexture(rootPath, s);
                             if (image != null)
                             {
                                 currentMaterial.ShininessTextureFilename = s;
@@ -942,15 +915,16 @@ public class WavefrontObjLoader
                                 currentMaterial.Material = CreateMaterial(currentMaterial);
                                 materialLibrary[currentMaterial.MaterialName] = currentMaterial;
                             }
-                            currentMaterial = new ObjMaterial();
-                            currentMaterial.Alpha = 1.0;
-                            currentMaterial.MaterialName = s;
+                            currentMaterial = new ObjMaterial
+                            {
+                                Alpha = 1.0,
+                                MaterialName = s
+                            };
                             continue;
                         }
                     case KeywordType.Shininess:
                         {
-                            double num4;
-                            if (!double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out num4))
+                            if (!double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double num4))
                             {
                                 goto Label_027A;
                             }
@@ -959,8 +933,7 @@ public class WavefrontObjLoader
                         }
                     case KeywordType.Transparency:
                         {
-                            Color color;
-                            ParseColor(s, out color);
+                            ParseColor(s, out Color color);
                             continue;
                         }
                 }
@@ -991,9 +964,6 @@ public class WavefrontObjLoader
 
     private static bool ParseVertex(string content, out Point3D vertex)
     {
-        float num;
-        float num2;
-        float num3;
         string[] strArray = content.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
         if (strArray.Length < 3)
         {
@@ -1001,18 +971,15 @@ public class WavefrontObjLoader
             return false;
         }
         bool flag = true;
-        flag &= float.TryParse(strArray[0], NumberStyles.Float, CultureInfo.InvariantCulture, out num);
-        flag &= float.TryParse(strArray[1], NumberStyles.Float, CultureInfo.InvariantCulture, out num2);
-        flag &= float.TryParse(strArray[2], NumberStyles.Float, CultureInfo.InvariantCulture, out num3);
+        flag &= float.TryParse(strArray[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float num);
+        flag &= float.TryParse(strArray[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float num2);
+        flag &= float.TryParse(strArray[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float num3);
         vertex = new Point3D((double)num, (double)num2, (double)num3);
         return flag;
     }
 
     private static bool ParseVertexNormal(string content, out Vector3D vector)
     {
-        float num;
-        float num2;
-        float num3;
         string[] strArray = content.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
         if (strArray.Length < 3)
         {
@@ -1020,9 +987,9 @@ public class WavefrontObjLoader
             return false;
         }
         bool flag = true;
-        flag &= float.TryParse(strArray[0], NumberStyles.Float, CultureInfo.InvariantCulture, out num);
-        flag &= float.TryParse(strArray[1], NumberStyles.Float, CultureInfo.InvariantCulture, out num2);
-        flag &= float.TryParse(strArray[2], NumberStyles.Float, CultureInfo.InvariantCulture, out num3);
+        flag &= float.TryParse(strArray[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float num);
+        flag &= float.TryParse(strArray[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float num2);
+        flag &= float.TryParse(strArray[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float num3);
         vector = new Vector3D((double)num, (double)num2, (double)num3);
         return flag;
     }
@@ -1051,8 +1018,6 @@ public class WavefrontObjLoader
 
     private static bool ParseVertexTextureCoordinate(string content, out Point textureCoordinate)
     {
-        float num;
-        float num2;
         string[] strArray = content.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
         if (strArray.Length < 2)
         {
@@ -1060,8 +1025,8 @@ public class WavefrontObjLoader
             return false;
         }
         bool flag = true;
-        flag &= float.TryParse(strArray[0], NumberStyles.Float, CultureInfo.InvariantCulture, out num);
-        flag &= float.TryParse(strArray[1], NumberStyles.Float, CultureInfo.InvariantCulture, out num2);
+        flag &= float.TryParse(strArray[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float num);
+        flag &= float.TryParse(strArray[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float num2);
         textureCoordinate = new Point((double)num, (double)(1f - num2));
         return flag;
     }
@@ -1075,61 +1040,37 @@ public class WavefrontObjLoader
 
         public List<int> CoordinateIndices
         {
-            get
-            {
-                return this.coordinateIndices;
-            }
-            set
-            {
-                this.coordinateIndices = value;
-            }
+            get => this.coordinateIndices;
+            set => this.coordinateIndices = value;
         }
 
         public Vector3D Normal
         {
-            get
-            {
-                return this.normal;
-            }
-            set
-            {
-                this.normal = value;
-            }
+            get => this.normal;
+            set => this.normal = value;
         }
 
         public List<int> NormalIndices
         {
-            get
-            {
-                return this.normalIndices;
-            }
-            set
-            {
-                this.normalIndices = value;
-            }
+            get => this.normalIndices;
+            set => this.normalIndices = value;
         }
 
         public List<int> TextureCoordinateIndices
         {
-            get
-            {
-                return this.textureCoordinateIndices;
-            }
-            set
-            {
-                this.textureCoordinateIndices = value;
-            }
+            get => this.textureCoordinateIndices;
+            set => this.textureCoordinateIndices = value;
         }
     }
 
     private class Geometry
     {
-        private int firstFaceIndex;
-        private int lastFaceIndex;
-        private System.Windows.Media.Media3D.Material material;
+        private int firstFaceIndex = 0;
+        private int lastFaceIndex = 0;
+        private Material material;
         private string name;
 
-        public Geometry(string name, System.Windows.Media.Media3D.Material material, int firstFaceIndex, int lastFaceIndex)
+        public Geometry(string name, Material material, int firstFaceIndex, int lastFaceIndex)
         {
             this.name = name;
             this.material = material;
@@ -1137,44 +1078,20 @@ public class WavefrontObjLoader
             this.lastFaceIndex = lastFaceIndex;
         }
 
-        public int FirstFaceIndex
-        {
-            get
-            {
-                return this.firstFaceIndex;
-            }
-        }
+        public int FirstFaceIndex => this.firstFaceIndex;
 
-        public int LastFaceIndex
-        {
-            get
-            {
-                return this.lastFaceIndex;
-            }
-        }
+        public int LastFaceIndex => this.lastFaceIndex;
 
-        public System.Windows.Media.Media3D.Material Material
+        public Material Material
         {
-            get
-            {
-                return this.material;
-            }
-            set
-            {
-                this.material = value;
-            }
+            get => this.material;
+            set => this.material = value;
         }
 
         public string Name
         {
-            get
-            {
-                return this.name;
-            }
-            set
-            {
-                this.name = value;
-            }
+            get => this.name;
+            set => this.name = value;
         }
     }
 
@@ -1183,29 +1100,14 @@ public class WavefrontObjLoader
         private List<WavefrontObjLoader.Geometry> geometry = new List<WavefrontObjLoader.Geometry>();
         private string name;
 
-        public Group(string name)
-        {
-            this.name = name;
-        }
+        public Group(string name) => this.name = name;
 
-        public List<WavefrontObjLoader.Geometry> Geometry
-        {
-            get
-            {
-                return this.geometry;
-            }
-        }
+        public List<WavefrontObjLoader.Geometry> Geometry => this.geometry;
 
         public string Name
         {
-            get
-            {
-                return this.name;
-            }
-            set
-            {
-                this.name = value;
-            }
+            get => this.name;
+            set => this.name = value;
         }
     }
 
@@ -1286,7 +1188,7 @@ public class WavefrontObjLoader
         public BitmapImage ReflectionTexture;
         public BitmapImage SpecularTexture;
         public BitmapImage ShininessTexture;
-        public System.Windows.Media.Media3D.Material Material;
+        public Material Material;
     }
 
     private class UniqueVertex
@@ -1297,7 +1199,7 @@ public class WavefrontObjLoader
         private Point textureCoordinates;
         private bool textureCoordinatesSet;
 
-        public int CompareWithinTolerance(WavefrontObjLoader.UniqueVertex other, double tolerance)
+        public int CompareWithinTolerance(UniqueVertex other, double tolerance)
         {
             if (other.normalSet != this.normalSet)
             {
@@ -1348,29 +1250,17 @@ public class WavefrontObjLoader
             return 0;
         }
 
-        private static bool DoubleIsWithinToleranceOf(double lhs, double rhs, double tolerance)
-        {
-            return (Math.Abs((double)(lhs - rhs)) < tolerance);
-        }
+        private static bool DoubleIsWithinToleranceOf(double lhs, double rhs, double tolerance) => (Math.Abs((double)(lhs - rhs)) < tolerance);
 
         public Point3D Coordinate
         {
-            get
-            {
-                return this.coordinate;
-            }
-            set
-            {
-                this.coordinate = value;
-            }
+            get => this.coordinate;
+            set => this.coordinate = value;
         }
 
         public Vector3D Normal
         {
-            get
-            {
-                return this.normal;
-            }
+            get => this.normal;
             set
             {
                 this.normal = value;
@@ -1378,20 +1268,11 @@ public class WavefrontObjLoader
             }
         }
 
-        public bool NormalSet
-        {
-            get
-            {
-                return this.normalSet;
-            }
-        }
+        public bool NormalSet => this.normalSet;
 
         public Point TextureCoordinates
         {
-            get
-            {
-                return this.textureCoordinates;
-            }
+            get => this.textureCoordinates;
             set
             {
                 this.textureCoordinates = value;
@@ -1399,20 +1280,12 @@ public class WavefrontObjLoader
             }
         }
 
-        public bool TextureCoordinatesSet
-        {
-            get
-            {
-                return this.textureCoordinatesSet;
-            }
-        }
+        public bool TextureCoordinatesSet => this.textureCoordinatesSet;
     }
 
     private class UniqueVertexComparer : Comparer<UniqueVertex>
     {
-        public override int Compare(WavefrontObjLoader.UniqueVertex x, WavefrontObjLoader.UniqueVertex y)
-        {
-            return x.CompareWithinTolerance(y, WavefrontObjLoader.GeneratedVertexTolerance);
-        }
+        public override int Compare([NotNull]UniqueVertex? x, [NotNull]UniqueVertex? y)
+            => x.CompareWithinTolerance(y, GeneratedVertexTolerance);
     }
 }

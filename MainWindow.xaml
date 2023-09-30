@@ -4,7 +4,7 @@
         MouseMove="Window_MouseMove" KeyDown="Window_KeyDown"
         Title="MainWindow" Height="350" Width="525" >
     <Grid x:Name="lay" Background="Azure" 
-          MouseLeftButtonDown="vp_MouseLeftButtonDown" 
+          MouseLeftButtonDown="Vp_MouseLeftButtonDown" 
           MouseWheel="VP_MouseWheel" 
           AllowDrop="true" Drop="Grid_Drop">
         <Viewport3D x:Name="viewPort" Margin="0,31,0.4,-0.2">
