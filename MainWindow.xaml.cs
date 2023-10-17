@@ -1,12 +1,12 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Timers;
+using System.Drawing;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Media.Effects;
-using System.Drawing;
-using System.IO;
 using System.Windows.Media.Imaging;
-using System.Windows.Interop;
 
 namespace CSWall;
 
@@ -20,26 +20,39 @@ public partial class MainWindow : Window
 
     //声明摄像头
     readonly PerspectiveCamera Camera;
-    
+
+    Timer timer;
     public MainWindow()
     {
-        InitializeComponent();
 
+        InitializeComponent();
+        this.timer = new Timer
+        {
+            Interval = 1000
+        };
+        this.timer.Elapsed += Timer_Elapsed;
+        //this.timer.Start();
         //摄像头
         Camera = new PerspectiveCamera
         {
-            Position = new Point3D(0, 0, 3000),
-            LookDirection = new Vector3D(0, 0, -1),
+            Position = new (0, 0, 3000),
+            LookDirection = new (0, 0, -1),
             FieldOfView = 1000
         };
         viewPort.Camera = Camera;
 
-        BuildModel((this.PSystem = new ParticleSystem()).WorldVisual);
+        BuildModel((this.PSystem = new ()).WorldVisual);
         if (!this.TryLoadClipboardImage())
         {
             this.TryLoadFile();
         }
     }
+
+    private void Timer_Elapsed(object? sender, ElapsedEventArgs e)
+    {
+        this.TryLoadClipboardImage();
+    }
+
     private void Grid_Drop(object sender, DragEventArgs e)
     {
         var data = e.Data.GetData(DataFormats.FileDrop);
@@ -238,7 +251,7 @@ public partial class MainWindow : Window
             using var bitmap = Image.FromFile(file) as Bitmap;
             if (bitmap != null)
             {
-                this.PSystem.SpawnParticleWithBoxes(bitmap);
+                this.PSystem.SpawnParticles(bitmap);
                 return true;
             }
         }
@@ -251,7 +264,7 @@ public partial class MainWindow : Window
             var image = Clipboard.GetImage();
             if (image is BitmapSource source)
             {
-                this.PSystem.SpawnParticleWithBoxes(
+                this.PSystem.SpawnParticles(
                     BitmapUtils.GetBitmapByImageSource(source));
                 return true;
             }

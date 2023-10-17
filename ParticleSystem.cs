@@ -1,16 +1,14 @@
-﻿using System.Collections.Generic;
-using System.Windows.Media.Media3D;
+﻿using System.Drawing;
 using System.Windows.Media;
-using System.Drawing;
 using GraphAlgorithmTester.Colors;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 
 namespace CSWall;
 
 public class ParticleSystem
 {
-    private readonly List<Particle> particles = new();
-    private Particle[,] particle_matrix = new Particle[0, 0];
+    public Particle[,] ParticleMatrix { get; private set; } = new Particle[0, 0];
     public ModelVisual3D WorldVisual = new() { Content = new Model3DGroup() };
     public Model3DGroup? WorldModels => WorldVisual.Content as Model3DGroup;
     public bool WithWalls { get; set; } = false;
@@ -23,17 +21,97 @@ public class ParticleSystem
     public ParticleSystem()
     {
     }
-
-    public void SpawnParticleWithBoxes(Bitmap bitmap)
+    public void SpawnParticles(Bitmap bitmap, bool expand = false)
     {
-        this.particles.Clear();
+        if (expand)
+            this.SpawnParticlesWithBoxesExpanding(bitmap);
+        else
+            this.SpawnParticlesWithBoxes(bitmap);    
+    }
+    public void SpawnParticlesWithBoxesExpanding(Bitmap bitmap)
+    {
         this.WorldModels?.Children.Clear();
         var width = bitmap.Width;
         var height = bitmap.Height;
         var halfWidth = width >> 1;
         var halfHeight = height >> 1;
 
-        particle_matrix = new Particle[height, width];
+        ParticleMatrix = new Particle[height<<1, width<<1];
+        // 初始化粒子位置和大小
+        for (int ix = 0; ix < width; ix++)
+        {
+            for (int iy = 0; iy < height; iy++)
+            {
+                var c = bitmap.GetPixel(ix, iy);
+
+                var r = c.R;
+                var g = c.G;
+                var b = c.B;
+                var a = c.A;
+
+                var pr = new Particle
+                {
+                    Position = new(
+                        (halfWidth - ix) * BoxEdgeWidth * 4 + 0,
+                        (iy - halfHeight) * BoxEdgeWidth * 4 + 0,
+                         0),
+                    Thickness = BoxEdgeWidth,
+                    Height = /*v == 0 ? 1 : */r / 255.0 * BoxHeight*4,//c.R=c.G=c.B
+                    Color = System.Windows.Media.Color.FromArgb(0, r, 0, 0)
+                };
+                ParticleMatrix[iy * 2 + 0, ix * 2 + 0] = pr;
+
+                var pg = new Particle
+                {
+                    Position = new(
+                    (halfWidth - ix) * BoxEdgeWidth * 4 + 1,
+                    (iy - halfHeight) * BoxEdgeWidth * 4 + 1,
+                     0),
+                    Thickness = BoxEdgeWidth,
+                    Height = /*v == 0 ? 1 : */g / 255.0 * BoxHeight * 4,//c.R=c.G=c.B
+                    Color = System.Windows.Media.Color.FromArgb(0, 0, g, 0)
+                };
+                ParticleMatrix[iy * 2 + 0, ix * 2 + 1] = pg;
+
+                var pb = new Particle
+                {
+                    Position = new(
+                    (halfWidth - ix) * BoxEdgeWidth * 4 + 2,
+                    (iy - halfHeight) * BoxEdgeWidth * 4 + 2,
+                     0),
+                    Thickness = BoxEdgeWidth,
+                    Height = /*v == 0 ? 1 : */b / 255.0 * BoxHeight * 4,//c.R=c.G=c.B
+                    Color = System.Windows.Media.Color.FromArgb(0, 0, 0, b)
+                };
+                ParticleMatrix[iy * 2 + 1, ix * 2 + 0] = pb;
+
+                var pa = new Particle
+                {
+                    Position = new(
+                    (halfWidth - ix) * BoxEdgeWidth * 4 + 3,
+                    (iy - halfHeight) * BoxEdgeWidth * 4 + 3,
+                     0),
+                    Thickness = BoxEdgeWidth,
+                    Height = /*v == 0 ? 1 : */a/255.0 * BoxHeight * 4,//c.R=c.G=c.B
+                    Color = System.Windows.Media.Color.FromArgb(0, a, a, a)
+                };
+                ParticleMatrix[iy * 2 + 1, ix * 2 + 1] = pa;
+
+            }
+        }
+        this.image = BitmapUtils.GetBitmapImageBybitmap(this.bitmap = bitmap);
+        this.UpdateGeometry();
+    }
+
+    public void SpawnParticlesWithBoxes(Bitmap bitmap)
+    {
+        this.WorldModels?.Children.Clear();
+        var width = bitmap.Width;
+        var height = bitmap.Height;
+        var halfWidth = width >> 1;
+        var halfHeight = height >> 1;
+
+        ParticleMatrix = new Particle[height, width];
         // 初始化粒子位置和大小
         for (int ix = 0; ix < width; ix++)
         {
@@ -51,8 +129,7 @@ public class ParticleSystem
                     Height = /*v == 0 ? 1 : */v * BoxHeight,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B)
                 };
-                particles.Add(p);
-                particle_matrix[iy, ix] = p;
+                ParticleMatrix[iy, ix] = p;
             }
         }
         this.image = BitmapUtils.GetBitmapImageBybitmap(this.bitmap = bitmap);
@@ -76,13 +153,13 @@ public class ParticleSystem
             var indices = new Int32Collection();
             var textures = new PointCollection();
 
-            int h = this.particle_matrix.GetLength(0);
-            int w = this.particle_matrix.GetLength(1);
+            int h = this.ParticleMatrix.GetLength(0);
+            int w = this.ParticleMatrix.GetLength(1);
             for (int y = 0; y < h; y++)
             {
                 for (int x = 0; x < w; x++)
                 {
-                    var particle = this.particle_matrix[y, x];
+                    var particle = this.ParticleMatrix[y, x];
                     //0,0,0
                     double height = particle.Height;
                     var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);
@@ -125,11 +202,20 @@ public class ParticleSystem
             }
 
             var geometry = new MeshGeometry3D();
-            var visualBrush = new ImageBrush(this.image);
-            var material = new DiffuseMaterial(visualBrush);
+
+            var material = new DiffuseMaterial
+            {
+                Brush = this.image != null
+                ? new ImageBrush(this.image)
+                : new SolidColorBrush(Colors.White)
+            };
+
             geometry.Positions = positions;
             geometry.TriangleIndices = indices;
-            geometry.TextureCoordinates = textures;
+            if (this.image != null)
+            {
+                geometry.TextureCoordinates = textures;
+            }
             collection.Add(new GeometryModel3D(geometry, material));
             if (this.WithWalls)
             {
@@ -140,7 +226,7 @@ public class ParticleSystem
                 int pc = 0;
                 for (int x = 0; x < w; x++)
                 {
-                    var particle = this.particle_matrix[0, x];
+                    var particle = this.ParticleMatrix[0, x];
                     //0,0,0
                     double height = particle.Height;
                     var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);
@@ -174,7 +260,7 @@ public class ParticleSystem
                 pc = 0;
                 for (int x = 0; x < w; x++)
                 {
-                    var particle = this.particle_matrix[h - 1, x];
+                    var particle = this.ParticleMatrix[h - 1, x];
                     //0,0,0
                     double height = particle.Height;
                     var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);
@@ -209,7 +295,7 @@ public class ParticleSystem
                 pc = 0;
                 for (int y = 0; y < h; y++)
                 {
-                    var particle = this.particle_matrix[y, 0];
+                    var particle = this.ParticleMatrix[y, 0];
                     //0,0,0
                     double height = particle.Height;
                     var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);
@@ -243,7 +329,7 @@ public class ParticleSystem
                 pc = 0;
                 for (int y = 0; y < h; y++)
                 {
-                    var particle = this.particle_matrix[y, w - 1];
+                    var particle = this.ParticleMatrix[y, w - 1];
                     //0,0,0
                     double height = particle.Height;
                     var p0 = new Point3D(particle.Position.X, particle.Position.Y, particle.Position.Z + height);

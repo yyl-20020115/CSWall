@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Windows.Media.Imaging;
 
 namespace CSWall;
@@ -39,7 +40,7 @@ public static class BitmapUtils
         try
         {
             using var stream = new MemoryStream();
-            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+            bitmap.Save(stream, ImageFormat.Png);
             image.BeginInit();
             image.StreamSource = stream;
             image.CacheOption = BitmapCacheOption.OnLoad;
