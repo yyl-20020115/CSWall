@@ -21,14 +21,13 @@ public class ParticleSystem
     public ParticleSystem()
     {
     }
-    public void SpawnParticles(Bitmap bitmap, bool expand = false)
-    {
-        if (expand)
-            this.SpawnParticlesWithBoxesExpanding(bitmap);
-        else
-            this.SpawnParticlesWithBoxes(bitmap);    
-    }
-    public void SpawnParticlesWithBoxesExpanding(Bitmap bitmap)
+    public ParticleSystem SpawnParticles(Bitmap bitmap, bool expand = false) 
+        => expand 
+        ? this.SpawnParticlesWithBoxesExpanding(bitmap) 
+        : this.SpawnParticlesWithBoxes(bitmap)
+        ;
+
+    public ParticleSystem SpawnParticlesWithBoxesExpanding(Bitmap bitmap)
     {
         this.WorldModels?.Children.Clear();
         var width = bitmap.Width;
@@ -36,7 +35,7 @@ public class ParticleSystem
         var halfWidth = width >> 1;
         var halfHeight = height >> 1;
 
-        ParticleMatrix = new Particle[height<<1, width<<1];
+        this.ParticleMatrix = new Particle[height<<1, width<<1];
         // 初始化粒子位置和大小
         for (int ix = 0; ix < width; ix++)
         {
@@ -59,7 +58,7 @@ public class ParticleSystem
                     Height = /*v == 0 ? 1 : */r / 255.0 * BoxHeight*4,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(0, r, 0, 0)
                 };
-                ParticleMatrix[iy * 2 + 0, ix * 2 + 0] = pr;
+                this.ParticleMatrix[iy * 2 + 0, ix * 2 + 0] = pr;
 
                 var pg = new Particle
                 {
@@ -71,7 +70,7 @@ public class ParticleSystem
                     Height = /*v == 0 ? 1 : */g / 255.0 * BoxHeight * 4,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(0, 0, g, 0)
                 };
-                ParticleMatrix[iy * 2 + 0, ix * 2 + 1] = pg;
+                this.ParticleMatrix[iy * 2 + 0, ix * 2 + 1] = pg;
 
                 var pb = new Particle
                 {
@@ -83,7 +82,7 @@ public class ParticleSystem
                     Height = /*v == 0 ? 1 : */b / 255.0 * BoxHeight * 4,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(0, 0, 0, b)
                 };
-                ParticleMatrix[iy * 2 + 1, ix * 2 + 0] = pb;
+                this.ParticleMatrix[iy * 2 + 1, ix * 2 + 0] = pb;
 
                 var pa = new Particle
                 {
@@ -95,15 +94,16 @@ public class ParticleSystem
                     Height = /*v == 0 ? 1 : */a/255.0 * BoxHeight * 4,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(0, a, a, a)
                 };
-                ParticleMatrix[iy * 2 + 1, ix * 2 + 1] = pa;
+                this.ParticleMatrix[iy * 2 + 1, ix * 2 + 1] = pa;
 
             }
         }
         this.image = BitmapUtils.GetBitmapImageBybitmap(this.bitmap = bitmap);
         this.UpdateGeometry();
+        return this;
     }
 
-    public void SpawnParticlesWithBoxes(Bitmap bitmap)
+    public ParticleSystem SpawnParticlesWithBoxes(Bitmap bitmap)
     {
         this.WorldModels?.Children.Clear();
         var width = bitmap.Width;
@@ -111,7 +111,7 @@ public class ParticleSystem
         var halfWidth = width >> 1;
         var halfHeight = height >> 1;
 
-        ParticleMatrix = new Particle[height, width];
+        this.ParticleMatrix = new Particle[height, width];
         // 初始化粒子位置和大小
         for (int ix = 0; ix < width; ix++)
         {
@@ -129,11 +129,13 @@ public class ParticleSystem
                     Height = /*v == 0 ? 1 : */v * BoxHeight,//c.R=c.G=c.B
                     Color = System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B)
                 };
-                ParticleMatrix[iy, ix] = p;
+                this.ParticleMatrix[iy, ix] = p;
             }
         }
         this.image = BitmapUtils.GetBitmapImageBybitmap(this.bitmap = bitmap);
         this.UpdateGeometry();
+        return this;
+
     }
 
     protected void UpdateGeometry()
