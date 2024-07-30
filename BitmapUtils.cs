@@ -18,7 +18,7 @@ public static class BitmapUtils
         encoder.Frames.Add(BitmapFrame.Create(source));
         encoder.Save(stream);
         using var bp = new Bitmap(stream);
-        return new Bitmap(bp);
+        return new (bp);
     }
     //BitmapImage to Bitmap
     public static Bitmap GetBitmapByBitmapImage(BitmapImage bitmapImage, bool isPng = false)
@@ -31,16 +31,16 @@ public static class BitmapUtils
         encoder.Frames.Add(BitmapFrame.Create(bitmapImage));
         encoder.Save(stream);
         using var bp = new Bitmap(stream);
-        return new Bitmap(bp);
+        return new (bp);
     }
-    // Bitmap  to BitmapImage
-    public static BitmapImage GetBitmapImageBybitmap(Bitmap bitmap)
+    // Bitmap to BitmapImage
+    public static BitmapImage GetBitmapImageBybitmap(Bitmap bitmap, bool isPng = true)
     {
         var image = new BitmapImage();
         try
         {
             using var stream = new MemoryStream();
-            bitmap.Save(stream, ImageFormat.Png);
+            bitmap.Save(stream, isPng ? ImageFormat.Png : ImageFormat.Bmp);
             image.BeginInit();
             image.StreamSource = stream;
             image.CacheOption = BitmapCacheOption.OnLoad;

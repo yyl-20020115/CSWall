@@ -9,7 +9,7 @@ namespace CSWall;
 public class ParticleSystem
 {
     public Particle[,] ParticleMatrix { get; private set; } = new Particle[0, 0];
-    public ModelVisual3D WorldVisual = new() { Content = new Model3DGroup() };
+    public ModelVisual3D WorldVisual { get; } = new() { Content = new Model3DGroup() };
     public Model3DGroup? WorldModels => WorldVisual.Content as Model3DGroup;
     public bool WithWalls { get; set; } = false;
     public int BoxEdgeWidth { get; set; } = 8;
@@ -17,12 +17,9 @@ public class ParticleSystem
     protected Bitmap? bitmap = null;
     protected BitmapImage? image = null;
     protected SolidColorBrush WallBrush = new(Colors.White);
-
-    public ParticleSystem()
-    {
-    }
+    public ParticleSystem() { }
     public ParticleSystem SpawnParticles(Bitmap bitmap, bool expand = false) 
-        => expand 
+        => expand  
         ? this.SpawnParticlesWithBoxesExpanding(bitmap) 
         : this.SpawnParticlesWithBoxes(bitmap)
         ;
@@ -34,8 +31,10 @@ public class ParticleSystem
         var height = bitmap.Height;
         var halfWidth = width >> 1;
         var halfHeight = height >> 1;
+        var doubleWidth = width << 1;
+        var doubleHeight = height << 1;
 
-        this.ParticleMatrix = new Particle[height<<1, width<<1];
+        this.ParticleMatrix = new Particle[doubleHeight, doubleWidth];
         // 初始化粒子位置和大小
         for (int ix = 0; ix < width; ix++)
         {
@@ -95,12 +94,10 @@ public class ParticleSystem
                     Color = System.Windows.Media.Color.FromArgb(0, a, a, a)
                 };
                 this.ParticleMatrix[iy * 2 + 1, ix * 2 + 1] = pa;
-
             }
         }
         this.image = BitmapUtils.GetBitmapImageBybitmap(this.bitmap = bitmap);
-        this.UpdateGeometry();
-        return this;
+        return this.UpdateGeometry();
     }
 
     public ParticleSystem SpawnParticlesWithBoxes(Bitmap bitmap)
@@ -133,14 +130,12 @@ public class ParticleSystem
             }
         }
         this.image = BitmapUtils.GetBitmapImageBybitmap(this.bitmap = bitmap);
-        this.UpdateGeometry();
-        return this;
-
+        return this.UpdateGeometry();
     }
 
-    protected void UpdateGeometry()
+    protected ParticleSystem UpdateGeometry()
     {
-        var worldModels = WorldModels;
+        var worldModels = this.WorldModels;
         if (worldModels != null)
         {
             var collection = new Model3DCollection
@@ -361,5 +356,6 @@ public class ParticleSystem
             }
             worldModels.Children = collection;
         }
+        return this;
     }
 }
