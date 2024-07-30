@@ -14,25 +14,19 @@ namespace CSWall;
 public partial class MainWindow : Window
 {
     //鼠标灵敏度调节
-    const double MouseDeltaFactor = 2;
+    private const double MouseDeltaFactor = 2;
 
-    readonly ParticleSystem PSystem;
-
-    //声明摄像头
-    readonly PerspectiveCamera Camera;
-
-    Timer timer;
+    private readonly ParticleSystem PSystem;
+    private readonly PerspectiveCamera Camera;
+    private readonly Timer timer = new()
+    {
+        Interval = 1000
+    };
     public MainWindow()
     {
 
         InitializeComponent();
-        this.timer = new Timer
-        {
-            Interval = 1000
-        };
         this.timer.Elapsed += Timer_Elapsed;
-        //this.timer.Start();
-        //摄像头
         Camera = new PerspectiveCamera
         {
             Position = new (0, 0, 3000),
