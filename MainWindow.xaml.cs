@@ -1,58 +1,64 @@
-﻿using System;
+﻿using System.IO;
+using System.Timers;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Media.Effects;
-using System.Drawing;
-using System.IO;
+using System.Windows.Media.Imaging;
 
 namespace CSWall;
 
 
 public partial class MainWindow : Window
 {
-    private ParticleSystem system;
+    //鼠标灵敏度调节
+    const double MouseDeltaFactor = 2;
+
+    readonly ParticleSystem PSystem;
 
     //声明摄像头
-    PerspectiveCamera myPCamera;
-    //鼠标灵敏度调节
-    double mouseDeltaFactor = 2;
+    readonly PerspectiveCamera Camera;
 
+    Timer timer;
     public MainWindow()
     {
+
         InitializeComponent();
-
-        //摄像头
-        myPCamera = new PerspectiveCamera();
-        myPCamera.Position = new Point3D(0, 0, 2000);
-        myPCamera.LookDirection = new Vector3D(0, 0, -1);
-        myPCamera.FieldOfView = 1000;
-        viewPort.Camera = myPCamera;
-
-        this.system = new ParticleSystem();
-        BuildModel(system.WorldVisual);
-        var filename = "dora.png";
-        if (File.Exists(filename))
+        this.timer = new Timer
         {
-            using var bitmap = Bitmap.FromFile(filename) as Bitmap;
-            if(bitmap != null)
-            {
-                this.system.SpawnParticleWithBoxes(bitmap);
-            }
+            Interval = 1000
+        };
+        this.timer.Elapsed += Timer_Elapsed;
+        //this.timer.Start();
+        //摄像头
+        Camera = new PerspectiveCamera
+        {
+            Position = new (0, 0, 3000),
+            LookDirection = new (0, 0, -1),
+            FieldOfView = 1000
+        };
+        viewPort.Camera = Camera;
+
+        BuildModel((this.PSystem = new ()).WorldVisual);
+        if (!this.TryLoadClipboardImage())
+        {
+            this.TryLoadFile();
         }
     }
+
+    private void Timer_Elapsed(object? sender, ElapsedEventArgs e)
+    {
+        this.TryLoadClipboardImage();
+    }
+
     private void Grid_Drop(object sender, DragEventArgs e)
     {
-        var f = e.Data.GetData(DataFormats.FileDrop);
-        if (f is string[] files && files.Length == 1)
+        var data = e.Data.GetData(DataFormats.FileDrop);
+        if (data is string[] files && files.Length == 1)
         {
-            using var bitmap =
-                Bitmap.FromFile(files[0]) as Bitmap;
-            if (bitmap != null)
-            {
-                system.SpawnParticleWithBoxes(bitmap);
-            }
+            this.TryLoadFile(files[0]);
         }
     }
     public void BuildModel(ModelVisual3D WorldModels)
@@ -123,12 +129,10 @@ public partial class MainWindow : Window
     {
         //MessageBox.Show(rawresult.ToString());
         // RayHitTestResult rayResult = rawresult as RayHitTestResult;
-        var rayResult = rawresult as RayHitTestResult;
-        if (rayResult != null)
+        if (rawresult is RayHitTestResult rayResult)
         {
             //RayMeshGeometry3DHitTestResult rayMeshResult = rayResult as RayMeshGeometry3DHitTestResult;
-            var rayMeshResultrayResult = rayResult as RayHitTestResult;
-            if (rayMeshResultrayResult != null)
+            if (rayResult is not null)
             {
                 //GeometryModel3D hitgeo = rayMeshResult.ModelHit as GeometryModel3D;
                 var visual3D = rawresult.VisualHit as ModelVisual3D;
@@ -144,7 +148,7 @@ public partial class MainWindow : Window
     //鼠标位置
     System.Windows.Point mouseLastPosition;
 
-    private void vp_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void Vp_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         mouseLastPosition = e.GetPosition(this);
         //RayHitTestParameters hitParams = new RayHitTestParameters(myPCamera.Position, myPCamera.LookDirection);
@@ -170,21 +174,19 @@ public partial class MainWindow : Window
             if (mouseLastPosition.X != newMousePosition.X)
             {
                 //进行水平旋转
-                HorizontalTransform(mouseLastPosition.X < newMousePosition.X, mouseDeltaFactor);//水平变换
+                HorizontalTransform(mouseLastPosition.X < newMousePosition.X, MouseDeltaFactor);//水平变换
             }
 
             if (mouseLastPosition.Y != newMousePosition.Y)// change position in the horizontal direction
 
             {
                 //进行垂直旋转
-                VerticalTransform(mouseLastPosition.Y > newMousePosition.Y, mouseDeltaFactor);//垂直变换 
+                VerticalTransform(mouseLastPosition.Y > newMousePosition.Y, MouseDeltaFactor);//垂直变换 
 
             }
 
             mouseLastPosition = newMousePosition;
-
         }
-
     }
 
     //鼠标滚轮缩放
@@ -193,10 +195,9 @@ public partial class MainWindow : Window
         double scaleFactor = 240;
         //120 near ,   -120 far
         //System.Diagnostics.Debug.WriteLine(e.Delta.ToString());
-        Point3D currentPosition = myPCamera.Position;
-        Vector3D lookDirection = myPCamera.LookDirection;
+        var currentPosition = Camera.Position;
+        var lookDirection = Camera.LookDirection;
         lookDirection.Normalize();
-
         lookDirection *= scaleFactor;
 
         if (e.Delta > 0)//getting near
@@ -209,21 +210,21 @@ public partial class MainWindow : Window
             //myPCamera.FieldOfView *= 1.2;
             currentPosition -= lookDirection;
         }
-        myPCamera.Position = currentPosition;
+        Camera.Position = currentPosition;
     }
 
     // 垂直变换
     private void VerticalTransform(bool upDown, double angleDeltaFactor)
     {
-        Vector3D postion = new(myPCamera.Position.X, myPCamera.Position.Y, myPCamera.Position.Z);
-        Vector3D rotateAxis = Vector3D.CrossProduct(postion, myPCamera.UpDirection);
+        Vector3D postion = new(Camera.Position.X, Camera.Position.Y, Camera.Position.Z);
+        Vector3D rotateAxis = Vector3D.CrossProduct(postion, Camera.UpDirection);
         RotateTransform3D rt3d = new();
         AxisAngleRotation3D rotate = new(rotateAxis, angleDeltaFactor * (upDown ? 1 : -1));
         rt3d.Rotation = rotate;
         Matrix3D matrix = rt3d.Value;
-        Point3D newPostition = matrix.Transform(myPCamera.Position);
-        myPCamera.Position = newPostition;
-        myPCamera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
+        Point3D newPostition = matrix.Transform(Camera.Position);
+        Camera.Position = newPostition;
+        Camera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
 
         //update the up direction
         //Vector3D newUpDirection = Vector3D.CrossProduct(myPCamera.LookDirection, rotateAxis);
@@ -233,22 +234,54 @@ public partial class MainWindow : Window
     // 水平变换：
     private void HorizontalTransform(bool leftRight, double angleDeltaFactor)
     {
-        Vector3D postion = new(myPCamera.Position.X, myPCamera.Position.Y, myPCamera.Position.Z);
-        Vector3D rotateAxis = myPCamera.UpDirection;
+        Vector3D postion = new(Camera.Position.X, Camera.Position.Y, Camera.Position.Z);
+        Vector3D rotateAxis = Camera.UpDirection;
         RotateTransform3D rt3d = new();
         AxisAngleRotation3D rotate = new(rotateAxis, angleDeltaFactor * (leftRight ? 1 : -1));
         rt3d.Rotation = rotate;
         Matrix3D matrix = rt3d.Value;
-        Point3D newPostition = matrix.Transform(myPCamera.Position);
-        myPCamera.Position = newPostition;
-        myPCamera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
+        Point3D newPostition = matrix.Transform(Camera.Position);
+        Camera.Position = newPostition;
+        Camera.LookDirection = new Vector3D(-newPostition.X, -newPostition.Y, -newPostition.Z);
     }
-
+    private bool TryLoadFile(string file = "dora.png")
+    {
+        if (File.Exists(file))
+        {
+            using var bitmap = Image.FromFile(file) as Bitmap;
+            if (bitmap != null)
+            {
+                this.PSystem.SpawnParticles(bitmap);
+                return true;
+            }
+        }
+        return false;
+    }
+    private bool TryLoadClipboardImage()
+    {
+        if (Clipboard.ContainsImage())
+        {
+            var image = Clipboard.GetImage();
+            if (image is BitmapSource source)
+            {
+                this.PSystem.SpawnParticles(
+                    BitmapUtils.GetBitmapByImageSource(source));
+                return true;
+            }
+        }
+        return false;
+    }
     private void Window_KeyDown(object sender, KeyEventArgs e)
     {
-        var p = myPCamera.Position;
+        if (e.Key == Key.V && Keyboard.IsKeyDown(Key.LeftCtrl))
+        {
+            this.TryLoadClipboardImage();
+            return ;
+        }
+
+        var p = Camera.Position;
         var any = false;
-        var offset = mouseDeltaFactor;
+        var offset = MouseDeltaFactor;
         switch (e.Key)
         {
             case Key.Left:
@@ -269,6 +302,6 @@ public partial class MainWindow : Window
                 break;
         }
         if (any)
-            myPCamera.Position = p;
+            Camera.Position = p;
     }
 }
